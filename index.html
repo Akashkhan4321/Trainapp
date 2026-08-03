@@ -1,0 +1,1836 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>লাইভ ট্রেন ট্র্যাকার - Android Native Edition</title>
+
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%232563eb'/%3E%3Cpath d='M112 120c0-13.3 10.7-24 24-24h240c13.3 0 24 10.7 24 24v192c0 35.3-28.7 64-64 64H176c-35.3 0-64-28.7-64-64V120zm32 32v120h224V152H144zm48 208a32 32 0 1 0 0 64 32 32 0 0 0 0-64zm176 0a32 32 0 1 0 0 64 32 32 0 0 0 0-64zM96 200h320v32H96v-32z' fill='%23ffffff'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%232563eb'/%3E%3Cpath d='M112 120c0-13.3 10.7-24 24-24h240c13.3 0 24 10.7 24 24v192c0 35.3-28.7 64-64 64H176c-35.3 0-64-28.7-64-64V120zm32 32v120h224V152H144zm48 208a32 32 0 1 0 0 64 32 32 0 0 0 0-64zm176 0a32 32 0 1 0 0 64 32 32 0 0 0 0-64zM96 200h320v32H96v-32z' fill='%23ffffff'/%3E%3C/svg%3E">
+
+  <style>
+    :root {
+      --primary: #0f172a;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --success: #16a34a;
+      --danger: #dc2626;
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --radius: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100dvh;
+      overflow: hidden;
+    }
+      #zero-point-container{display:none;}
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      height: 100dvh;
+      background: var(--card-bg);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (min-width: 480px) {
+      .app-container {
+        border-radius: 36px;
+        border: 8px solid #cbd5e1;
+        height: 85vh;
+      }
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--border);
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .brand {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      letter-spacing: -0.5px;
+    }
+
+    .brand svg { width: 24px; height: 24px; stroke: var(--accent); }
+
+    .points-badge {
+      background: #eff6ff;
+      color: var(--accent);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 12px;
+      border: 1px solid #bfdbfe;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .points-badge:hover { background: #dbeafe; }
+    .points-badge svg { width: 14px; height: 14px; fill: currentColor; }
+
+    .app-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      position: relative;
+      background: var(--bg);
+    }
+
+    .app-content::-webkit-scrollbar { width: 4px; }
+    .app-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+
+    .bottom-nav {
+      height: 64px;
+      background: white;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 100;
+      flex-shrink: 0;
+    }
+
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+      height: 100%;
+    }
+
+    .nav-item svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; transition: 0.2s; }
+    .nav-item.active { color: var(--accent); }
+    .nav-item.active svg { stroke: var(--accent); fill: rgba(37, 99, 235, 0.1); }
+
+    .btn-google {
+      background: #ffffff;
+      color: #1e293b;
+      border: 1px solid var(--border);
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .btn-google:hover { background: #f8fafc; border-color: var(--accent); }
+    .btn-google svg { width: 18px; height: 18px; }
+
+    .view-screen {
+      display: none;
+      animation: fadeInScreen 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .view-screen.active { display: block; }
+
+    @keyframes fadeInScreen {
+      from { opacity: 0; transform: scale(0.98); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .btn-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      padding: 18px;
+      border-radius: var(--radius);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary);
+      width: 100%;
+      margin-bottom: 14px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+      transition: all 0.2s ease;
+    }
+
+    .btn-card:hover {
+      border-color: var(--accent);
+      background: #f8fafc;
+      transform: translateY(-1px);
+    }
+
+    .btn-card svg { width: 18px; height: 18px; stroke: var(--accent); }
+
+    .btn-add-trigger {
+      background: #f0fdf4;
+      color: var(--success);
+      border: 1px dashed #bbf7d0;
+      padding: 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 700;
+      width: 100%;
+      margin-top: 10px;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-btn {
+      background: white;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      margin-bottom: 14px;
+      font-size: 13px;
+      padding: 8px 14px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    }
+
+    .train-name {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+    }
+
+    .train-route {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .tap-instruction {
+      background: #f8fafc;
+      border: 2px dashed #93c5fd;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tap-instruction:hover { border-color: var(--accent); background: #fefefe; }
+
+    .live-loc {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-top: 4px;
+    }
+
+    .station-dropdown {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      font-weight: 500;
+      background: #f8fafc;
+      color: var(--primary);
+      outline: none;
+    }
+
+    .act-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .btn-update { background: var(--accent); color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+
+    .update-info-wrapper {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 8px 10px;
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .cooldown-timer {
+      font-weight: 800;
+      color: var(--danger);
+      background: #fee2e2;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .vote-box {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .vote-btn {
+      flex: 1;
+      padding: 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .vote-yes { background: #f0fdf4; color: var(--success); border-color: #bbf7d0; }
+    .vote-yes:hover { background: #dcfce7; }
+
+    .vote-no { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+    .vote-no:hover { background: #fee2e2; }
+
+    .form-group { margin-bottom: 12px; }
+    .form-group label { font-size: 12px; font-weight: 700; color: var(--muted); display: block; margin-bottom: 4px; }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      font-size: 14px;
+      outline: none;
+      background: #f8fafc;
+    }
+
+    .st-box { background: #f8fafc; padding: 10px; border-radius: 12px; border: 1px dashed var(--border); margin-bottom: 8px; }
+    .st-row { display: flex; gap: 8px; }
+
+    .timetable-box {
+      background: white;
+      border-radius: var(--radius);
+      padding: 14px;
+      border: 1px solid var(--border);
+    }
+
+    .timetable-box h5 { font-size: 13px; color: var(--primary); margin-bottom: 10px; font-weight: 800; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .tbl td, .tbl th { padding: 8px 6px; text-align: left; border-bottom: 1px solid var(--border); }
+
+    .modal-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      padding: 20px;
+    }
+
+    .modal-card {
+      background: white;
+      width: 100%;
+      max-width: 340px;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-title { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+    .modal-desc { font-size: 13px; color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
+    .modal-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 15px;
+      outline: none;
+      margin-bottom: 14px;
+      background: #f8fafc;
+    }
+
+    .modal-actions { display: flex; gap: 10px; }
+    .modal-btn { flex: 1; padding: 12px; border-radius: 12px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; }
+    .modal-btn-cancel { background: #f1f5f9; color: var(--muted); }
+    .modal-btn-submit { background: var(--accent); color: white; }
+
+    .admin-nav-tabs { display: flex; gap: 6px; margin-bottom: 14px; overflow-x: auto; }
+    .admin-tab { flex: 1; padding: 10px; text-align: center; background: #f1f5f9; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--muted); white-space: nowrap; }
+    .admin-tab.active { background: white; border: 1px solid var(--border); color: var(--accent); }
+
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .profile-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--accent);
+    }
+    .profile-info h4 {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .profile-info p {
+      font-size: 12px;
+      color: var(--muted);
+    }
+      
+    .zero-point-banner {
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+      border: 2px dashed #f87171;
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .zero-point-banner h4 {
+      color: #991b1b;
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+    .zero-point-banner p {
+      color: #7f1d1d;
+      font-size: 12px;
+      margin-bottom: 14px;
+      line-height: 1.4;
+    }
+    .btn-watch-ad {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+      transition: 0.2s;
+    }
+    .btn-watch-ad:hover { background: #b91c1c; }
+
+    #loading-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(2px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 3000;
+    }
+    .train-loader-icon {
+      width: 50px;
+      height: 50px;
+      animation: trainBounce 0.8s infinite alternate ease-in-out;
+      fill: var(--accent);
+    }
+    @keyframes trainBounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
+    }
+    .loading-text { font-size: 14px; font-weight: 700; color: var(--primary); }
+  </style>
+
+  <!-- Firebase SDKs -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, doc, onSnapshot, setDoc, updateDoc, deleteDoc, getDoc, collection, query, where, getDocs, increment, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC7bnUxhzjiU8yo8nNOpTPlpV5fbgFKN0g",
+      authDomain: "studio-2624043776-a68a0.firebaseapp.com",
+      projectId: "studio-2624043776-a68a0",
+      storageBucket: "studio-2624043776-a68a0.firebasestorage.app",
+      messagingSenderId: "317498467210",
+      appId: "1:317498467210:web:16c48ee2732ed6dac41e73"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    const ADMIN_PASSWORD = "588680Ab@";
+    const ADMIN_EMAIL = "akashkhan45000@gmail.com"; 
+
+    let currentUser = null;
+    let currentSelectedTrainId = null;
+    let unsubscribeTrainListener = null;
+    let cooldownInterval = null;
+    let globalAdSettings = { adUrl: "https://www.example.com", adDuration: 10 };
+    
+    let isWatchingAd = false;
+    let adTimeLeft = 0;
+    let adTimerInterval = null;
+
+    function showLoading(text = "লোডিং হচ্ছে...") {
+      document.getElementById('loading-text').innerText = text;
+      document.getElementById('loading-overlay').style.display = 'flex';
+    }
+
+    function hideLoading() {
+      document.getElementById('loading-overlay').style.display = 'none';
+    }
+
+    window.showModal = ({ title, desc, type = "alert", inputPlaceholder = "", defaultValue = "", showSelect = false, selectOptions = [], onSubmit }) => {
+      const overlay = document.getElementById('custom-modal-overlay');
+      document.getElementById('modal-title').innerText = title;
+      document.getElementById('modal-desc').innerText = desc;
+      
+      const inputEl = document.getElementById('modal-input');
+      const selectEl = document.getElementById('modal-select');
+      const cancelBtn = document.getElementById('modal-cancel-btn');
+      
+      if (type === "prompt") {
+        inputEl.style.display = "block";
+        inputEl.value = defaultValue;
+        inputEl.placeholder = inputPlaceholder;
+        setTimeout(() => inputEl.focus(), 50);
+      } else {
+        inputEl.style.display = "none";
+      }
+
+      if (showSelect) {
+        selectEl.style.display = "block";
+        selectEl.innerHTML = "";
+        selectOptions.forEach(opt => {
+          selectEl.innerHTML += `<option value="${opt.value}">${opt.label}</option>`;
+        });
+      } else {
+        selectEl.style.display = "none";
+      }
+
+      cancelBtn.style.display = type === "alert" ? "none" : "block";
+      overlay.style.display = "flex";
+
+      window._activeModalSubmit = async () => {
+        const val = inputEl.value;
+        const selVal = selectEl.value;
+        closeModal();
+        if (onSubmit) await onSubmit(val, selVal);
+      };
+    };
+
+    window.closeModal = () => {
+      document.getElementById('custom-modal-overlay').style.display = "none";
+      window._activeModalSubmit = null;
+    };
+
+    window.submitModal = () => {
+      if (window._activeModalSubmit) window._activeModalSubmit();
+    };
+
+    window.loginWithGoogle = async () => {
+      try {
+        showLoading("লগইন হচ্ছে...");
+        await signInWithPopup(auth, provider);
+      } catch (err) {
+        console.error("Login Error: ", err);
+      } finally {
+        hideLoading();
+      }
+    };
+
+    window.logout = async () => {
+      await signOut(auth);
+      switchTab('home');
+    };
+
+    onAuthStateChanged(auth, async (user) => {
+      const loggedInView = document.getElementById('logged-in-view');
+      const loggedOutView = document.getElementById('logged-out-view');
+
+      if (user) {
+        currentUser = user;
+        await syncUserData(user);
+        checkAdminAccess(user);
+        loadUserProfileData(user.uid);
+        loadWeeklyLeaderboard();
+        fetchAdSettings();
+
+        if (loggedInView) loggedInView.style.display = 'block';
+        if (loggedOutView) loggedOutView.style.display = 'none';
+      } else {
+        currentUser = null;
+        document.getElementById('u-pts').innerText = "0";
+        document.getElementById('admin-trigger-container').style.display = 'none';
+        document.getElementById('user-ranking-box').innerHTML = '<p style="font-size:12px; color:var(--muted); text-align:center;">লগইন করা নেই।</p>';
+        document.getElementById('zero-point-container').style.display = 'none';
+        loadWeeklyLeaderboard();
+
+        if (loggedInView) loggedInView.style.display = 'none';
+        if (loggedOutView) loggedOutView.style.display = 'block';
+      }
+    });
+
+    async function fetchAdSettings() {
+      try {
+        const adSnap = await getDoc(doc(db, "settings", "ads"));
+        if (adSnap.exists()) {
+          globalAdSettings = adSnap.data();
+        }
+      } catch (e) {
+        console.error("Ad settings fetch error", e);
+      }
+    }
+
+    async function syncUserData(user) {
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      let pts = 0;
+      if (userSnap.exists()) {
+        pts = Number((userSnap.data().points || 0).toFixed(1));
+      } else {
+        pts = 5;
+        await setDoc(userRef, { name: user.displayName, email: user.email, points: 5, role: "user", weeklyPoints: 5 });
+      }
+      
+      document.getElementById('u-pts').innerText = pts;
+      document.getElementById('profile-pts').innerText = pts;
+      document.getElementById('profile-name').innerText = user.displayName || "নামহীন ব্যবহারকারী";
+      document.getElementById('profile-email').innerText = user.email || "";
+      if (user.photoURL) {
+        document.getElementById('profile-img').src = user.photoURL;
+      }
+
+      const zeroContainer = document.getElementById('zero-point-container');
+      if (pts < 1) {
+        zeroContainer.style.display = 'block';
+      } else {
+        zeroContainer.style.display = 'none';
+      }
+    }
+
+    async function checkAdminAccess(user) {
+      const triggerContainer = document.getElementById('admin-trigger-container');
+      if (user.email === ADMIN_EMAIL) {
+        triggerContainer.style.display = 'block';
+        return;
+      }
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (userSnap.exists() && userSnap.data().role === 'admin') {
+        triggerContainer.style.display = 'block';
+      } else {
+        triggerContainer.style.display = 'none';
+      }
+    }
+
+    async function loadUserProfileData(uid) {
+      const container = document.getElementById('user-ranking-box');
+      container.innerHTML = '<p style="font-size:12px; color:var(--muted); text-align:center;">র‍্যাংকিং লোড হচ্ছে...</p>';
+      try {
+        const q = query(collection(db, "users"), orderBy("weeklyPoints", "desc"));
+        const querySnapshot = await getDocs(q);
+        let rank = 1;
+        let myRank = "-";
+        let myWeeklyPoints = 0;
+
+        querySnapshot.forEach((docSnap) => {
+          const uData = docSnap.data();
+          if (docSnap.id === uid) {
+            myRank = rank;
+            myWeeklyPoints = Number((uData.weeklyPoints || 0).toFixed(1));
+          }
+          rank++;
+        });
+
+        container.innerHTML = `
+          <div style="display:flex; justify-content:space-between; align-items:center; font-size:14px; font-weight:700;">
+            <span>সাপ্তাহিক লিডারবোর্ড র‍্যাংক:</span>
+            <span style="color:var(--accent); font-size:16px;">#${myRank}</span>
+          </div>
+          <div style="font-size:12px; color:var(--muted); margin-top:6px;">সাপ্তাহিক পয়েন্ট: ${myWeeklyPoints}</div>
+        `;
+      } catch (e) {
+        container.innerHTML = '<p style="font-size:12px; color:red; text-align:center;">র‍্যাংকিং লোড করতে সমস্যা হয়েছে!</p>';
+      }
+    }
+
+    async function loadWeeklyLeaderboard() {
+      const container = document.getElementById('all-heroes-list');
+      container.innerHTML = '<p style="font-size:13px; color:var(--muted); text-align:center; padding:20px;">হিরোদের তালিকা লোড হচ্ছে...</p>';
+      try {
+        const q = query(collection(db, "users"), orderBy("weeklyPoints", "desc"));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          container.innerHTML = '<p style="font-size:13px; color:var(--muted); text-align:center; padding:20px;">কোন হিরো পাওয়া যায়নি।</p>';
+          return;
+        }
+        container.innerHTML = '';
+        let rank = 1;
+        querySnapshot.forEach((docSnap) => {
+          const u = docSnap.data();
+          let medalEmoji = "🏅";
+          if (rank === 1) medalEmoji = "🥇";
+          else if (rank === 2) medalEmoji = "🥈";
+          else if (rank === 3) medalEmoji = "🥉";
+
+          const wPoints = Number((u.weeklyPoints || 0).toFixed(1));
+
+          container.innerHTML += `
+            <div class="st-box" style="display:flex; justify-content:space-between; align-items:center; background:white; padding:14px; border-radius:14px; border:1px solid var(--border); margin-bottom:10px;">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div style="font-size:18px; font-weight:800; width:30px; text-align:center;">${medalEmoji}</div>
+                <div>
+                  <div style="font-size:14px; font-weight:800; color:var(--primary);">${u.name || "নামহীন হিরো"}</div>
+                  <div style="font-size:11px; color:var(--muted);">${u.email || ""}</div>
+                </div>
+              </div>
+              <div style="font-size:15px; font-weight:800; color:var(--accent);">${wPoints} pts</div>
+            </div>
+          `;
+          rank++;
+        });
+      } catch (e) {
+        container.innerHTML = '<p style="font-size:13px; color:red; text-align:center; padding:20px;">লিডারবোর্ড লোড করতে সমস্যা হয়েছে!</p>';
+      }
+    }
+
+    window.switchTab = async (tabId) => {
+      document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+      if (tabId === 'home') {
+        document.getElementById('screen-dir').classList.add('active');
+        document.getElementById('nav-home').classList.add('active');
+      } else if (tabId === 'heroes') {
+        document.getElementById('screen-heroes').classList.add('active');
+        document.getElementById('nav-heroes').classList.add('active');
+        loadWeeklyLeaderboard();
+      } else if (tabId === 'profile') {
+        document.getElementById('screen-profile').classList.add('active');
+        document.getElementById('nav-profile').classList.add('active');
+        if (currentUser) loadUserProfileData(currentUser.uid);
+      }
+    };
+
+    window.selectDirection = async (dir) => {
+      showLoading("ট্রেন তালিকা লোড হচ্ছে...");
+      document.getElementById('screen-dir').classList.remove('active');
+      document.getElementById('screen-list').classList.add('active');
+      const container = document.getElementById('list-container');
+      container.innerHTML = '<p style="font-size:13px; color:var(--muted); text-align:center; padding:20px;">ট্রেন লোড হচ্ছে...</p>';
+
+      try {
+        const q = query(collection(db, "trains"), where("direction", "==", dir));
+        const querySnapshot = await getDocs(q);
+        container.innerHTML = '';
+        if (querySnapshot.empty) {
+          container.innerHTML = '<p style="font-size:13px; color:var(--muted); text-align:center; padding:20px;">কোন ট্রেন পাওয়া যায়নি।</p>';
+          hideLoading();
+          return;
+        }
+
+        querySnapshot.forEach((docSnap) => {
+          const t = docSnap.data();
+          const btn = document.createElement('button');
+          btn.className = 'btn-card';
+          btn.innerHTML = `<span>🚆 ${t.name}</span> <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+          btn.onclick = () => openDetails(docSnap.id, t);
+          container.appendChild(btn);
+        });
+      } catch (e) {
+        container.innerHTML = '<p style="font-size:13px; color:red; text-align:center;">ডেটা লোড করতে সমস্যা হয়েছে!</p>';
+      } finally {
+        hideLoading();
+      }
+    };
+
+    window.goBack = (from, to) => {
+      if (from === 'screen-details') {
+        if (unsubscribeTrainListener) unsubscribeTrainListener();
+        if (cooldownInterval) clearInterval(cooldownInterval);
+      }
+      document.getElementById(from).classList.remove('active');
+      document.getElementById(to).classList.add('active');
+    };
+
+    window.verifyAdminAndOpenDashboard = () => {
+      showModal({
+        title: "🔐 এডমিন পাসওয়ার্ড",
+        desc: "ড্যাশবোর্ডে প্রবেশ করতে পাসওয়ার্ড দিন।",
+        type: "prompt",
+        inputPlaceholder: "পাসওয়ার্ড দিন...",
+        onSubmit: async (val) => {
+          if (val === ADMIN_PASSWORD) {
+            loadAdminDashboard();
+          } else {
+            showModal({ title: "ত্রুটি", desc: "ভুল পাসওয়ার্ড!", type: "alert" });
+          }
+        }
+      });
+    };
+
+    async function loadAdminDashboard() {
+      document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
+      document.getElementById('screen-admin-hub').classList.add('active');
+      switchAdminTab('trains');
+      loadAdminTrainsDropdown();
+      loadTopLeaderboardInAdmin();
+      
+      try {
+        const adSnap = await getDoc(doc(db, "settings", "ads"));
+        if (adSnap.exists()) {
+          const d = adSnap.data();
+          document.getElementById('admin-ad-url').value = d.adUrl || "";
+          document.getElementById('admin-ad-duration').value = d.adDuration || 10;
+        }
+      } catch(e) {}
+    }
+
+    window.switchAdminTab = (tabName) => {
+      document.getElementById('tab-trains-content').style.display = tabName === 'trains' ? 'block' : 'none';
+      document.getElementById('tab-ads-content').style.display = tabName === 'ads' ? 'block' : 'none';
+      document.getElementById('tab-leaderboard-content').style.display = tabName === 'leaderboard' ? 'block' : 'none';
+      
+      document.getElementById('tab-btn-trains').className = `admin-tab ${tabName === 'trains' ? 'active' : ''}`;
+      document.getElementById('tab-btn-ads').className = `admin-tab ${tabName === 'ads' ? 'active' : ''}`;
+      document.getElementById('tab-btn-leaderboard').className = `admin-tab ${tabName === 'leaderboard' ? 'active' : ''}`;
+    };
+
+    window.saveAdminAdSettings = async (e) => {
+      e.preventDefault();
+      showLoading("অ্যাড সেটিংস সেভ হচ্ছে...");
+      const adUrl = document.getElementById('admin-ad-url').value.trim();
+      const adDuration = parseInt(document.getElementById('admin-ad-duration').value) || 10;
+
+      await setDoc(doc(db, "settings", "ads"), { adUrl, adDuration }, { merge: true });
+      globalAdSettings = { adUrl, adDuration };
+      hideLoading();
+      showModal({ title: "সফল", desc: "অ্যাড লিংক ও সময়সীমা সফলভাবে আপডেট করা হয়েছে!", type: "alert" });
+    };
+
+    window.startWatchingAd = async () => {
+      if (!currentUser) {
+        loginWithGoogle();
+        return;
+      }
+
+      if (!globalAdSettings.adUrl) {
+        showModal({ title: "ত্রুটি", desc: "কোনো অ্যাড লিংক সেট করা নেই।", type: "alert" });
+        return;
+      }
+
+      window.open(globalAdSettings.adUrl, '_blank');
+
+      isWatchingAd = true;
+      adTimeLeft = globalAdSettings.adDuration || 10;
+
+      const banner = document.getElementById('zero-point-container');
+      banner.innerHTML = `
+        <div class="zero-point-banner" style="border-color: #2563eb; background: #eff6ff;">
+          <h4 style="color: #1e40af;">⏳ বিজ্ঞাপনের সাইটে অবস্থান করুন</h4>
+          <p style="color: #1e3a8a;">মূল সাইটে ফিরে আসার জন্য আর <span id="live-ad-counter" style="font-weight: 800; font-size: 15px; color: var(--danger);">${adTimeLeft}</span> সেকেন্ড অপেক্ষা করুন। এর আগে ফিরে আসলে পয়েন্ট পাবেন না!</p>
+          <button class="btn-watch-ad" style="background: var(--danger);" onclick="cancelAdViewing()">
+            ❌ বাতিল করুন
+          </button>
+        </div>
+      `;
+
+      if (adTimerInterval) clearInterval(adTimerInterval);
+
+      adTimerInterval = setInterval(() => {
+        adTimeLeft--;
+        const counterEl = document.getElementById('live-ad-counter');
+        if (counterEl) counterEl.innerText = adTimeLeft;
+
+        if (adTimeLeft <= 0) {
+          clearInterval(adTimerInterval);
+          isWatchingAd = false;
+          grantAdReward();
+        }
+      }, 1000);
+    };
+
+    window.addEventListener('focus', () => {
+      if (isWatchingAd) {
+        clearInterval(adTimerInterval);
+        isWatchingAd = false;
+        resetAdBannerToNormal();
+        
+        showModal({ 
+          title: "⚠️ সময় শেষ হওয়ার আগেই ফিরে এসেছেন!", 
+          desc: "আপনি নির্দিষ্ট সময় বিজ্ঞাপনের সাইটে অবস্থান করেননি, তাই কোনো রিওয়ার্ড দেওয়া হয়নি।", 
+          type: "alert" 
+        });
+      }
+    });
+
+    window.cancelAdViewing = () => {
+      if (adTimerInterval) clearInterval(adTimerInterval);
+      isWatchingAd = false;
+      resetAdBannerToNormal();
+    };
+
+    function resetAdBannerToNormal() {
+      const banner = document.getElementById('zero-point-container');
+      banner.innerHTML = `
+        <div class="zero-point-banner">
+          <h4>⚠️ পয়েন্ট ১ এর নিচে রয়েছে!</h4>
+          <p>ট্রেন আপডেট পেজে প্রবেশ করার জন্য অন্তত ১ পয়েন্ট প্রয়োজন। নিচের বাটনে ক্লিক করে সম্পূর্ণ বিজ্ঞাপন দেখে পয়েন্ট সংগ্রহ করুন।</p>
+          <button class="btn-watch-ad" onclick="startWatchingAd()">
+            ▶️ বিজ্ঞাপন দেখে পয়েন্ট অর্জন করুন (+০.৫ Pt)
+          </button>
+        </div>
+      `;
+    }
+
+    async function grantAdReward() {
+      resetAdBannerToNormal();
+      showLoading("রিওয়ার্ড যোগ হচ্ছে...");
+
+      try {
+        const userRef = doc(db, "users", currentUser.uid);
+        const userSnap = await getDoc(userRef);
+        let currentPts = userSnap.exists() ? (userSnap.data().points || 0) : 0;
+        let currentWPts = userSnap.exists() ? (userSnap.data().weeklyPoints || 0) : 0;
+        let updatedPts = Number((currentPts + 0.5).toFixed(1));
+        let updatedWPts = Number((currentWPts + 0.5).toFixed(1));
+
+        await updateDoc(userRef, {
+          points: updatedPts,
+          weeklyPoints: updatedWPts
+        });
+        await syncUserData(currentUser);
+        hideLoading();
+
+        showModal({ 
+          title: "অভিনন্দন! 🎉", 
+          desc: "আপনি সফলভাবে সময় পূর্ণ করেছেন এবং ০.৫ পয়েন্ট যোগ হয়েছে।", 
+          type: "alert" 
+        });
+      } catch (err) {
+        console.error("Point update error:", err);
+        hideLoading();
+        showModal({ title: "ত্রুটি", desc: "পয়েন্ট যোগ করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।", type: "alert" });
+      }
+    }
+
+    async function loadAdminTrainsDropdown() {
+      const sel = document.getElementById('admin-train-select');
+      sel.innerHTML = '<option value="">-- নতুন ট্রেন যোগ করুন --</option>';
+      const querySnapshot = await getDocs(collection(db, "trains"));
+      querySnapshot.forEach((docSnap) => {
+        const t = docSnap.data();
+        sel.innerHTML += `<option value="${docSnap.id}">${t.name} (${t.direction})</option>`;
+      });
+      clearAdminForm();
+    }
+
+    async function loadTopLeaderboardInAdmin() {
+      const container = document.getElementById('admin-leaderboard-container');
+      container.innerHTML = '<p style="font-size:12px; color:var(--muted); text-align:center;">লিডারবোর্ড লোড হচ্ছে...</p>';
+      try {
+        const q = query(collection(db, "users"), orderBy("weeklyPoints", "desc"), limit(10));
+        const querySnapshot = await getDocs(q);
+        if (querySnapshot.empty) {
+          container.innerHTML = '<p style="font-size:12px; color:var(--muted); text-align:center;">কোন ইউজার নেই।</p>';
+          return;
+        }
+        container.innerHTML = '';
+        let rank = 1;
+        querySnapshot.forEach((docSnap) => {
+          const u = docSnap.data();
+          const wPoints = Number((u.weeklyPoints || 0).toFixed(1));
+          container.innerHTML += `
+            <div class="st-box" style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-size:13px; font-weight:700;">#${rank} ${u.name || "নামহীন"}</div>
+                <div style="font-size:11px; color:var(--muted);">${u.email || ""}</div>
+              </div>
+              <div style="font-size:14px; font-weight:800; color:var(--accent);">${wPoints} pts</div>
+            </div>
+          `;
+          rank++;
+        });
+      } catch (e) {
+        container.innerHTML = '<p style="font-size:12px; color:red; text-align:center;">লিডারবোর্ড লোড করতে সমস্যা হয়েছে!</p>';
+      }
+    }
+
+    window.onAdminTrainSelected = () => {
+      const trainId = document.getElementById('admin-train-select').value;
+      if (!trainId) { clearAdminForm(); return; }
+      getDoc(doc(db, "trains", trainId)).then((snap) => {
+        if (snap.exists()) {
+          const t = snap.data();
+          currentSelectedTrainId = trainId;
+          document.getElementById('new-t-name').value = t.name || "";
+          document.getElementById('new-t-dir').value = t.direction || "up";
+          document.getElementById('new-t-route').value = t.route || "";
+          const cont = document.getElementById('add-st-container');
+          cont.innerHTML = "";
+          t.stations.forEach(s => {
+            cont.innerHTML += `<div class="st-box"><div class="st-row"><input type="text" class="st-name" value="${s.name}" style="flex:1"><input type="text" class="st-time" value="${s.time}" style="width:100px"></div></div>`;
+          });
+          document.getElementById('btn-save-train').innerText = "ট্রেন আপডেট সেভ করুন";
+          document.getElementById('btn-delete-train').style.display = "block";
+        }
+      });
+    };
+
+    window.clearAdminForm = () => {
+      currentSelectedTrainId = null;
+      document.getElementById('admin-train-select').value = "";
+      document.getElementById('add-t-form').reset();
+      document.getElementById('add-st-container').innerHTML = `<div class="st-box"><div class="st-row"><input type="text" placeholder="স্টেশনের নাম" class="st-name" style="flex:1"><input type="text" placeholder="সময়" class="st-time" style="width:100px"></div></div>`;
+      document.getElementById('btn-save-train').innerText = "নতুন ট্রেন সেভ করুন";
+      document.getElementById('btn-delete-train').style.display = "none";
+    };
+
+    window.addStInput = () => {
+      const nameInputs = document.querySelectorAll('.st-name');
+      const timeInputs = document.querySelectorAll('.st-time');
+      
+      nameInputs.forEach((el, idx) => {
+        el.setAttribute('value', el.value);
+      });
+      timeInputs.forEach((el, idx) => {
+        el.setAttribute('value', el.value);
+      });
+
+      document.getElementById('add-st-container').innerHTML += `<div class="st-box"><div class="st-row"><input type="text" placeholder="স্টেশনের নাম" class="st-name" style="flex:1"><input type="text" placeholder="সময়" class="st-time" style="width:100px"></div></div>`;
+    };
+
+    window.saveAdminTrain = async (e) => {
+      e.preventDefault();
+      showLoading("সেভ হচ্ছে...");
+      const name = document.getElementById('new-t-name').value.trim();
+      const dir = document.getElementById('new-t-dir').value;
+      const route = document.getElementById('new-t-route').value.trim();
+      const stations = [];
+      document.querySelectorAll('.st-name').forEach((el, idx) => {
+        if(el.value.trim()) stations.push({ name: el.value.trim(), time: document.querySelectorAll('.st-time')[idx].value.trim() || "--:--" });
+      });
+
+      const trainId = currentSelectedTrainId ? currentSelectedTrainId : ("custom_" + Date.now());
+      await setDoc(doc(db, "trains", trainId), { 
+        id: trainId, 
+        name, 
+        route, 
+        direction: dir, 
+        stations, 
+        currentLocation: "যাত্রা শুরু হয়নি", 
+        lastUpdated: "তথ্য নেই", 
+        lastUpdatedTimestamp: 0,
+        voters: {} 
+      }, { merge: true });
+      hideLoading();
+      showModal({ title: "সফল", desc: "ট্রেন সফলভাবে সেভ হয়েছে!", type: "alert", onSubmit: () => goBack('screen-admin-hub', 'screen-dir') });
+    };
+
+    window.deleteAdminTrain = async () => {
+      if (!currentSelectedTrainId) return;
+      showLoading("ডিলিট হচ্ছে...");
+      await deleteDoc(doc(db, "trains", currentSelectedTrainId));
+      hideLoading();
+      goBack('screen-admin-hub', 'screen-dir');
+    };
+
+    async function openDetails(trainId, trainData) {
+      if (!currentUser) {
+        await loginWithGoogle();
+        if (!auth.currentUser) return;
+      }
+
+      showLoading("চেক করা হচ্ছে...");
+      const userRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      const currentPts = userSnap.exists() ? (userSnap.data().points || 0) : 0;
+
+      if (currentPts < 1) {
+        hideLoading();
+        showModal({ title: "⚠️ পর্যাপ্ত পয়েন্ট নেই!", desc: "ট্রেন আপডেট পেজে প্রবেশ করতে অন্তত ১ পয়েন্ট প্রয়োজন। হোম পেজে গিয়ে অ্যাড দেখে পয়েন্ট সংগ্রহ করুন।", type: "alert" });
+        return;
+      }
+
+      let updatedPts = Number((currentPts - 1).toFixed(1));
+      await updateDoc(userRef, {
+        points: updatedPts
+      });
+      await syncUserData(currentUser);
+
+      currentSelectedTrainId = trainId;
+      document.querySelectorAll('.view-screen').forEach(el => el.classList.remove('active'));
+      document.getElementById('screen-details').classList.add('active');
+
+      const tbody = document.getElementById('tbl-body');
+      tbody.innerHTML = '';
+
+      trainData.stations.forEach(s => {
+        tbody.innerHTML += `<tr><td><b>${s.name}</b></td><td>${s.time}</td></tr>`;
+      });
+
+      if (unsubscribeTrainListener) unsubscribeTrainListener();
+      unsubscribeTrainListener = onSnapshot(doc(db, "trains", trainId), (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          document.getElementById('t-name').innerText = data.name;
+          document.getElementById('t-route').innerText = data.route;
+          document.getElementById('t-loc').innerText = data.currentLocation;
+          document.getElementById('t-last-update').innerText = data.lastUpdated;
+          
+          const voters = data.voters || {};
+          let yesCount = 0;
+          let noCount = 0;
+          Object.values(voters).forEach(v => {
+            if (v === 'yes') yesCount++;
+            if (v === 'no') noCount++;
+          });
+          document.getElementById('vote-yes-count').innerText = yesCount;
+          document.getElementById('vote-no-count').innerText = noCount;
+
+          checkCooldownState(data.lastUpdatedTimestamp || 0);
+        }
+      });
+      hideLoading();
+    }
+
+    function checkCooldownState(lastTs) {
+      if (cooldownInterval) clearInterval(cooldownInterval);
+      const now = Date.now();
+      const cooldownDuration = 60 * 1000;
+      const diff = now - lastTs;
+
+      const timerEl = document.getElementById('cooldown-timer');
+      const tapCard = document.getElementById('tap-instruction-card');
+
+      if (diff < cooldownDuration) {
+        startTimer(Math.ceil((cooldownDuration - diff) / 1000));
+      } else {
+        timerEl.style.display = 'none';
+        tapCard.style.pointerEvents = 'auto';
+      }
+    }
+
+    function startTimer(durationSec) {
+      const timerEl = document.getElementById('cooldown-timer');
+      const tapCard = document.getElementById('tap-instruction-card');
+      timerEl.style.display = 'inline-block';
+      tapCard.style.pointerEvents = 'auto';
+
+      let remaining = durationSec;
+      timerEl.innerText = `${remaining}s`;
+
+      cooldownInterval = setInterval(() => {
+        remaining--;
+        if (remaining > 0) {
+          timerEl.innerText = `${remaining}s`;
+        } else {
+          clearInterval(cooldownInterval);
+          timerEl.style.display = 'none';
+          tapCard.style.pointerEvents = 'auto';
+        }
+      }, 1000);
+    }
+
+    window.tapToUpdateLocation = async () => {
+      showModal({
+        title: "📍 লোকেশন আপডেট",
+        desc: "বর্তমান লোকেশন লিখুন:",
+        type: "prompt",
+        inputPlaceholder: "যেমন: ঢাকা স্টেশন",
+        onSubmit: async (loc) => { if(loc) executeLocationUpdate(loc.trim()); }
+      });
+    };
+
+    async function executeLocationUpdate(locationText) {
+      showLoading("আপডেট করা হচ্ছে...");
+      const trainRef = doc(db, "trains", currentSelectedTrainId);
+      const trainSnap = await getDoc(trainRef);
+      const trainData = trainSnap.data();
+      const lastTs = trainData.lastUpdatedTimestamp || 0;
+      const now = Date.now();
+
+      const cooldownTime = 60 * 1000;
+      if (now - lastTs < cooldownTime) {
+        hideLoading();
+        const remainingSec = Math.ceil((cooldownTime - (now - lastTs)) / 1000);
+        showModal({ title: "কুলডাউন চলছে", desc: `নতুন আপডেট দিতে হলে আরও ${remainingSec} সেকেন্ড অপেক্ষা করুন।`, type: "alert" });
+        return;
+      }
+
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      await updateDoc(trainRef, {
+        currentLocation: locationText,
+        lastUpdated: `${currentUser.displayName} (${timeStr})`,
+        lastUpdatedTimestamp: now,
+        voters: {}
+      });
+
+      const userRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      let currentPts = userSnap.exists() ? (userSnap.data().points || 0) : 0;
+      let currentWPts = userSnap.exists() ? (userSnap.data().weeklyPoints || 0) : 0;
+
+      await updateDoc(userRef, { 
+        points: Number((currentPts + 2).toFixed(1)), 
+        weeklyPoints: Number((currentWPts + 2).toFixed(1)) 
+      });
+      await syncUserData(currentUser);
+      hideLoading();
+      showModal({ title: "ধন্যবাদ!", desc: `লোকেশন সফলভাবে আপডেট হয়েছে এবং ২ পয়েন্ট যুক্ত হয়েছে (+২)`, type: "alert" });
+    }
+
+    window.castVote = async (voteType) => {
+      const trainRef = doc(db, "trains", currentSelectedTrainId);
+      const trainSnap = await getDoc(trainRef);
+      if (!trainSnap.exists()) return;
+
+      const trainData = trainSnap.data();
+      const voters = trainData.voters || {};
+
+      if (voters[currentUser.uid]) {
+        showModal({ title: "⚠️ ইতিমধ্যে ভোট দিয়েছেন", desc: "এই আপডেটটিতে আপনি ইতিমধ্যে একবার ভোট দিয়েছেন। নতুন কোনো আপডেট আসলে তখন আবার ভোট দিতে পারবেন।", type: "alert" });
+        return;
+      }
+
+      showLoading("ভোট সাবমিট হচ্ছে...");
+
+      voters[currentUser.uid] = voteType;
+
+      let negativeCount = 0;
+      Object.values(voters).forEach(v => {
+        if (v === 'no') negativeCount++;
+      });
+
+      if (negativeCount >= 5) {
+        await updateDoc(trainRef, {
+          currentLocation: "যাত্রা শুরু হয়নি (অটো রিপোর্ট রিমুভড)",
+          lastUpdated: "তথ্য নেই (অতিরিক্ত ভুল ভোটের কারণে রিসেট)",
+          lastUpdatedTimestamp: 0,
+          voters: {}
+        });
+        hideLoading();
+        showModal({ title: "⚠️ আপডেট রিমুভ করা হয়েছে", desc: "এই আপডেটটিতে ৫টির বেশি নেগেটিভ ভোট পড়ায় সিস্টেম থেকে এটি স্বয়ংক্রিয়ভাবে বাতিল করা হয়েছে।", type: "alert" });
+        return;
+      }
+
+      await updateDoc(trainRef, {
+        voters: voters
+      });
+
+      const userRef = doc(db, "users", currentUser.uid);
+      const userSnap = await getDoc(userRef);
+      let currentPts = userSnap.exists() ? (userSnap.data().points || 0) : 0;
+      let currentWPts = userSnap.exists() ? (userSnap.data().weeklyPoints || 0) : 0;
+
+      await updateDoc(userRef, { 
+        points: Number((currentPts + 0.2).toFixed(1)), 
+        weeklyPoints: Number((currentWPts + 0.2).toFixed(1)) 
+      });
+      await syncUserData(currentUser);
+      hideLoading();
+      showModal({ title: "ভোট সফল!", desc: `আপনার ভোট গ্রহণ করা হয়েছে এবং ০.২ পয়েন্ট যোগ করা হয়েছে (+০.২)`, type: "alert" });
+    };
+  </script>
+</head>
+<body>
+
+<div class="app-container">
+  <div id="loading-overlay">
+    <svg class="train-loader-icon" viewBox="0 0 512 512">
+      <path d="M112 120c0-13.3 10.7-24 24-24h240c13.3 0 24 10.7 24 24v192c0 35.3-28.7 64-64 64H176c-35.3 0-64-28.7-64-64V120zm32 32v120h224V152H144zm48 208a32 32 0 1 0 0 64 32 32 0 0 0 0-64zm176 0a32 32 0 1 0 0 64 32 32 0 0 0 0-64zM96 200h320v32H96v-32z"/>
+    </svg>
+    <div class="loading-text" id="loading-text">লোড হচ্ছে...</div>
+  </div>
+
+  <div class="header">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5"><path d="M4 11V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4M4 11v6a2 2 0 0 0 2 2h1v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h6v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h1a2 2 0 0 0 2-2v-6M4 11h16M7 15h2M15 15h2"/></svg>
+      ট্রেন ট্র্যাকার
+    </div>
+    <div class="points-badge" onclick="switchTab('profile')">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M15 9.5H10.5A1.5 1.5 0 0 0 9 11v0a1.5 1.5 0 0 0 1.5 1.5h3A1.5 1.5 0 0 1 15 14v0a1.5 1.5 0 0 1-1.5 1.5H9"/></svg>
+      <span id="u-pts">0</span> Pt
+    </div>
+  </div>
+
+  <div class="app-content">
+    
+    <!-- SCREEN 1: HOME (DIR) -->
+    <div id="screen-dir" class="view-screen active">
+      <div id="zero-point-container">
+        <div class="zero-point-banner">
+          <h4>⚠️ পয়েন্ট ১ এর নিচে রয়েছে!</h4>
+          <p>ট্রেন আপডেট পেজে প্রবেশ করার জন্য অন্তত ১ পয়েন্ট প্রয়োজন। নিচের বাটনে ক্লিক করে সম্পূর্ণ বিজ্ঞাপন দেখে পয়েন্ট সংগ্রহ করুন।</p>
+          <button class="btn-watch-ad" onclick="startWatchingAd()">
+            ▶️ বিজ্ঞাপন দেখে পয়েন্ট অর্জন করুন (+০.৫ Pt)
+          </button>
+        </div>
+      </div>
+
+      <button class="btn-card" onclick="selectDirection('up')">
+        <span style="display:flex; align-items:center; gap:10px;">⬆️ Up Train (ঢাকা ➔ চট্টগ্রাম)</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+      <button class="btn-card" onclick="selectDirection('down')">
+        <span style="display:flex; align-items:center; gap:10px;">⬇️ Down Train (চট্টগ্রাম ➔ ঢাকা)</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+
+      <div id="admin-trigger-container" style="display: none;">
+        <button class="btn-add-trigger" onclick="verifyAdminAndOpenDashboard()">
+          ⚙️ এডমিন ড্যাশবোর্ড ও ট্রেন ম্যানেজ
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN: ADMIN HUB -->
+    <div id="screen-admin-hub" class="view-screen">
+      <button class="back-btn" onclick="goBack('screen-admin-hub', 'screen-dir')">← হোমপেজে ফিরে যান</button>
+      <div class="admin-nav-tabs">
+        <div id="tab-btn-trains" class="admin-tab active" onclick="switchAdminTab('trains')">ট্রেন ম্যানেজ</div>
+        <div id="tab-btn-ads" class="admin-tab" onclick="switchAdminTab('ads')">অ্যাড সেটিংস</div>
+        <div id="tab-btn-leaderboard" class="admin-tab" onclick="switchAdminTab('leaderboard')">সাপ্তাহিক লিডারবোর্ড</div>
+      </div>
+
+      <div id="tab-trains-content">
+        <div class="form-group">
+          <select id="admin-train-select" class="station-dropdown" onchange="onAdminTrainSelected()">
+            <option value="">-- নতুন ট্রেন যোগ করুন --</option>
+          </select>
+        </div>
+        <form id="add-t-form" onsubmit="saveAdminTrain(event)">
+          <div class="form-group"><label>ট্রেনের নাম:</label><input type="text" id="new-t-name" required></div>
+          <div class="form-group"><label>রুট দিক:</label><select id="new-t-dir"><option value="up">Up Train</option><option value="down">Down Train</option></select></div>
+          <div class="form-group"><label>রুট বিবরণ:</label><input type="text" id="new-t-route" required></div>
+          <div class="form-group">
+            <label>স্টেশনসমূহ:</label>
+            <div id="add-st-container">
+              <div class="st-box"><div class="st-row"><input type="text" placeholder="স্টেশনের নাম" class="st-name" style="flex:1"><input type="text" placeholder="সময়" class="st-time" style="width:100px"></div></div>
+            </div>
+            <button type="button" onclick="addStInput()" style="margin-top:8px; background:#e2e8f0; border:none; padding:6px 12px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;">+ স্টেশন যোগ করুন</button>
+          </div>
+          <button type="submit" id="btn-save-train" class="act-btn btn-update" style="margin-top:10px;">সেভ করুন</button>
+          <button type="button" id="btn-delete-train" onclick="deleteAdminTrain()" style="margin-top:8px; background:#fee2e2; color:var(--danger); border:none; padding:12px; border-radius:12px; font-weight:700; width:100%; display:none; cursor:pointer;">ডিলিট ট্রেন</button>
+        </form>
+      </div>
+
+      <div id="tab-ads-content" style="display: none;">
+        <form onsubmit="saveAdminAdSettings(event)">
+          <div class="form-group">
+            <label>বিজ্ঞাপনের লিংক (ভিডিও/ব্যানার URL):</label>
+            <input type="url" id="admin-ad-url" placeholder="https://example.com/ad" required>
+          </div>
+          <div class="form-group">
+            <label>বাইরে থাকার সময়সীমা (সেকেন্ডে):</label>
+            <input type="number" id="admin-ad-duration" value="10" min="5" required>
+          </div>
+          <button type="submit" class="act-btn btn-update" style="margin-top: 10px;">অ্যাড সেটিংস সেভ করুন</button>
+        </form>
+      </div>
+
+      <div id="tab-leaderboard-content" style="display: none;">
+        <h5 style="font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 10px;">সাপ্তাহিক শীর্ষ অবদানকারীগণ</h5>
+        <div id="admin-leaderboard-container"></div>
+      </div>
+    </div>
+
+    <!-- SCREEN: TRAIN LIST -->
+    <div id="screen-list" class="view-screen">
+      <button class="back-btn" onclick="goBack('screen-list', 'screen-dir')">← দিক পরিবর্তন</button>
+      <div id="list-container"></div>
+    </div>
+
+    <!-- SCREEN: DETAILS -->
+    <div id="screen-details" class="view-screen">
+      <button class="back-btn" onclick="goBack('screen-details', 'screen-list')">← ট্রেনের তালিকা</button>
+      <div class="status-card">
+        <div class="train-name" id="t-name">LOAD...</div>
+        <div class="train-route" id="t-route">...</div>
+        <div class="tap-instruction" id="tap-instruction-card" onclick="tapToUpdateLocation()">
+          <div style="font-size: 11px; color: var(--muted);">সর্বশেষ অবস্থান (ট্যাপ করে আপডেট দিন):</div>
+          <div class="live-loc" id="t-loc">📍 লোড হচ্ছে...</div>
+          <div style="font-size: 10px; color: var(--success); margin-top: 4px; font-weight: 700;"></div>
+        </div>
+        
+        <div class="update-info-wrapper">
+          <span>👤 আপডেট: <span id="t-last-update">তথ্য নেই</span></span>
+          <span class="cooldown-timer" id="cooldown-timer">60s</span>
+        </div>
+
+        <div class="vote-box">
+          <button class="vote-btn vote-yes" onclick="castVote('yes')">👍 ঠিক আছে (<span id="vote-yes-count">0</span>)</button>
+          <button class="vote-btn vote-no" onclick="castVote('no')">👎 বেঠিক (<span id="vote-no-count">0</span>)</button>
+        </div>
+      </div>
+
+      <div class="timetable-box">
+        <h5>সময়সূচী</h5>
+        <table class="tbl"><tbody id="tbl-body"></tbody></table>
+      </div>
+    </div>
+
+    <!-- SCREEN: ALL HEROES (LEADERBOARD) -->
+    <div id="screen-heroes" class="view-screen">
+      <div style="margin-bottom: 14px;">
+        <h4 style="font-size: 16px; font-weight: 800; color: var(--primary);">🏆 সাপ্তাহিক All Heroes</h4>
+        <p style="font-size: 12px; color: var(--muted);">এই সপ্তাহে সবচেয়ে বেশি আপডেট ও ভোট প্রদানকারী হিরোদের তালিকা</p>
+      </div>
+      <div id="all-heroes-list">
+        <p style="font-size: 13px; color: var(--muted); text-align: center; padding: 20px;">লোড হচ্ছে...</p>
+      </div>
+    </div>
+
+    <!-- SCREEN: PROFILE -->
+    <div id="screen-profile" class="view-screen">
+      <div id="logged-out-view" class="status-card" style="text-align: center; padding: 30px 20px;">
+        <div style="font-size: 40px; margin-bottom: 10px;">🔐</div>
+        <h4 style="font-size: 16px; font-weight: 800; color: var(--primary); margin-bottom: 6px;">লগইন আবশ্যক</h4>
+        <p style="font-size: 13px; color: var(--muted); margin-bottom: 20px;">প্রোফাইল পেজ দেখতে এবং লিডারবোর্ড র‍্যাংক চেক করতে প্রথমে গুগল দিয়ে লগইন করুন।</p>
+        <button type="button" class="btn-google" onclick="loginWithGoogle()">
+          <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.18v3.15C3.17 21.33 7.23 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.6H1.18C.43 8.13 0 9.87 0 12s.43 3.87 1.18 5.4l4.09-3.16z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.17 2.67 1.18 6.6l4.09 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
+          Google দিয়ে লগইন করুন
+        </button>
+      </div>
+
+      <div id="logged-in-view" style="display: none;">
+        <div class="status-card">
+          <div class="profile-header">
+            <img id="profile-img" src="https://via.placeholder.com/60" alt="Avatar" class="profile-avatar">
+            <div class="profile-info">
+              <h4 id="profile-name">নামহীন ব্যবহারকারী</h4>
+              <p id="profile-email">email@domain.com</p>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 16px; font-size: 13px; color: var(--muted);">
+            উপলব্ধ পয়েন্ট: <span id="profile-pts" style="font-weight:700; color:var(--accent);">0</span> Pt
+          </div>
+          
+          <div class="st-box" id="user-ranking-box" style="background:#f8fafc; padding:14px; border-radius:12px; margin-bottom:12px;">
+            <p style="font-size:12px; color:var(--muted); text-align:center;">র‍্যাংকিং লোড হচ্ছে...</p>
+          </div>
+
+          <button type="button" onclick="logout()" style="background: #fee2e2; color: var(--danger); border: none; padding: 10px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; font-size: 13px;">লগআউট (Logout)</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-item active" id="nav-home" onclick="switchTab('home')">
+      <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      হোম
+    </button>
+    <button class="nav-item" id="nav-heroes" onclick="switchTab('heroes')">
+      <svg viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>
+      All Heroes
+    </button>
+    <button class="nav-item" id="nav-profile" onclick="switchTab('profile')">
+      <svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      প্রোফাইল
+    </button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="custom-modal-overlay">
+  <div class="modal-card">
+    <div class="modal-title" id="modal-title">বিজ্ঞপ্তি</div>
+    <div class="modal-desc" id="modal-desc">বিবরণ</div>
+    <select id="modal-select" class="station-dropdown" style="display: none; margin-bottom: 12px;"></select>
+    <input type="text" id="modal-input" class="modal-input" style="display: none;">
+    <div class="modal-actions">
+      <button class="modal-btn modal-btn-cancel" id="modal-cancel-btn" onclick="closeModal()">বাতিল</button>
+      <button class="modal-btn modal-btn-submit" onclick="submitModal()">নিশ্চিত</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
+        
+        // NEW: Check if ALL items are fully served (quantity === servedQuantity)
+        const allItemsFullyServed = cart.every(item => item.quantity === (item.servedQuantity || 0)); 
+
+        const pendingOrder = {
+            orderId: Date.now(),
+            table: tableNumber,
+            date: new Date().toLocaleTimeString('bn-BD', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            // Map items to ensure servedQuantity is initialized if somehow missing (for old data compatibility)
+            items: JSON.parse(JSON.stringify(cart.map(item => ({
+                ...item, 
+                servedQuantity: item.servedQuantity || 0 // Ensure servedQuantity is present
+            })))),
+            total: billData.total, 
+            isServed: allItemsFullyServed // The overall status is derived from item status
+        };
+
+        pendingOrders.push(pendingOrder);
+        localStorage.setItem(PENDING_KEY, JSON.stringify(pendingOrders));
+        
+        cart = []; 
+        // Reset the select field to its default/placeholder option
+        document.getElementById('table-number').value = ''; 
+        renderCart();
+        updatePendingBadge(); 
+        showToast(`অর্ডারটি (${tableNumber}) পেন্ডিং লিস্টে সেভ করা হয়েছে।`, 'success');
+    }
+
+    // UPDATED: Load Order for Edit - preserves servedQuantity
+    function loadOrderForEdit(orderId) {
+        const pendingOrders = getPendingOrders();
+        const index = pendingOrders.findIndex(o => o.orderId === orderId);
+
+        if (index > -1) {
+            
+            // Map items to ensure servedQuantity is present (for old data compatibility)
+            const itemsToLoad = pendingOrders[index].items.map(item => ({
+                ...item,
+                // Convert old boolean isItemServed to servedQuantity if needed, but new data should have servedQuantity
+                servedQuantity: item.servedQuantity !== undefined 
+                    ? item.servedQuantity 
+                    : (item.isItemServed ? item.quantity : 0) // Convert old boolean to quantity tracking
+            }));
+            
+            cart = JSON.parse(JSON.stringify(itemsToLoad)); // Deep copy loaded items
+            
+            document.getElementById('table-number').value = pendingOrders[index].table;
+
+            pendingOrders.splice(index, 1);
+            localStorage.setItem(PENDING_KEY, JSON.stringify(pendingOrders));
+            
+            closeModal('pending-modal');
+            renderCart();
+            updatePendingBadge(); 
+            showToast(`টেবিল ${document.getElementById('table-number').value} এর অর্ডারটি এডিটের জন্য কার্টে লোড করা হয়েছে।`, 'info');
+        }
+    }
+
+    async function deletePendingOrder(orderId) {
+        const confirmed = await customConfirm("আপনি কি এই অর্ডারটি সত্যিই ডিলিট করতে চান?");
+        if (!confirmed) return;
+
+        let pendingOrders = getPendingOrders();
+        pendingOrders = pendingOrders.filter(o => o.orderId !== orderId);
+        localStorage.setItem(PENDING_KEY, JSON.stringify(pendingOrders));
+        renderPendingOrders();
+        updatePendingBadge(); 
+        showToast("অর্ডারটি সফলভাবে ডিলিট করা হয়েছে।", 'success');
+    }
+
+    async function finalizePendingOrder(orderId) {
+        let pendingOrders = getPendingOrders();
+        const orderIndex = pendingOrders.findIndex(o => o.orderId === orderId);
+
+        if (orderIndex > -1) {
+            const finalizedOrder = pendingOrders[orderIndex];
+            
+            // Check if served before confirming payment
+            if (!finalizedOrder.isServed) {
+                 showToast("অনুগ্রহ করে আগে অর্ডারটি সম্পূর্ণরূপে 'Serve' করুন।", 'error');
+                 return;
+            }
+            
+            const confirmed = await customConfirm(`চূড়ান্ত বিল: ${finalizedOrder.total.toFixed(2)} ৳। পেমেন্ট নিশ্চিত করুন?`);
+            if (!confirmed) return;
+
+            const transaction = {
+                orderId: finalizedOrder.orderId,
+                table: finalizedOrder.table,
+                date: finalizedOrder.date,
+                items: finalizedOrder.items,
+                total: finalizedOrder.total 
+            };
+            
+            saveTransaction(transaction);
+
+            pendingOrders.splice(orderIndex, 1);
+            localStorage.setItem(PENDING_KEY, JSON.stringify(pendingOrders));
+
+            renderPendingOrders();
+            updatePendingBadge(); 
+            // Replaced native alert with showToast
+            showToast(`টেবিল ${finalizedOrder.table} এর ${finalizedOrder.total.toFixed(2)} ৳ বিলটি চূড়ান্ত বিক্রয় হিসেবে রেকর্ড করা হয়েছে!`, 'success');
+        }
+    }
+
+    // --- 5. Reporting Logic (Daily, Monthly, History) ---
+
+    function getLocalTransactions() {
+        return JSON.parse(localStorage.getItem(TRANSACTIONS_KEY) || '[]');
+    }
+    
+    function getArchivedSalesHistory() {
+        return JSON.parse(localStorage.getItem(ARCHIVED_SALES_KEY) || '[]');
+    }
+    
+    function getMonthlySalesTotal() {
+        return parseFloat(localStorage.getItem(MONTHLY_SALES_TOTAL_KEY) || '0.00');
+    }
+    
+    function setMonthlySalesTotal(total) {
+        localStorage.setItem(MONTHLY_SALES_TOTAL_KEY, total.toFixed(2));
+        loadMonthlySalesTotal();
+    }
+    
+    function loadMonthlySalesTotal() {
+        const total = getMonthlySalesTotal();
+        document.getElementById('monthly-total-display').textContent = total.toFixed(2) + ' ৳';
+    }
+    
+    function saveTransaction(transaction) {
+        const transactions = getLocalTransactions();
+        transactions.push(transaction);
+        localStorage.setItem(TRANSACTIONS_KEY, JSON.stringify(transactions));
+        loadDailySales();
+    }
+
+    function loadDailySales() {
+        const transactions = getLocalTransactions();
+        const totalTransactions = transactions.length;
+        const totalSales = transactions.reduce((sum, t) => sum + t.total, 0); 
+
+        document.getElementById('total-transactions').textContent = totalTransactions;
+        document.getElementById('daily-sales-total').textContent = totalSales.toFixed(2) + ' ৳';
+    }
+    
+    function renderTransactionList() {
+        const transactions = getLocalTransactions();
+        const listContainer = document.getElementById('transaction-list');
+        
+        if (transactions.length === 0) {
+            listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center;">আজকের কোনো চূড়ান্ত বিক্রয় রেকর্ড করা হয়নি।</p>';
+            return;
+        }
+
+        transactions.sort((a, b) => b.orderId - a.orderId);
+
+        listContainer.innerHTML = transactions.map(t => 
+            `<div class="report-transaction">
+                <strong>ID: ${t.orderId}</strong> | টেবিল: ${t.table} | মোট: ${t.total.toFixed(2)} ৳ | তারিখ: ${t.date}
+            </div>`
+        ).join('');
+        
+        showToast(`আজকের মোট ${transactions.length} টি ট্রানজ্যাকশন লোড করা হয়েছে।`, 'info');
+    }
+    
+    function renderArchivedSales() {
+        const history = getArchivedSalesHistory();
+        const listContainer = document.getElementById('archived-sales-list');
+
+        if (history.length === 0) {
+            listContainer.innerHTML = '<p style="color:var(--text-secondary); text-align:center;">কোনো সেভ করা দৈনিক বিক্রয়ের ইতিহাস নেই।</p>';
+            return;
+        }
+        
+        history.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        listContainer.innerHTML = history.map(item => 
+            `<div class="archived-item">
+                <span>${item.date} (${item.transactionCount} ট্রানজ্যাকশন)</span>
+                <strong>${item.total.toFixed(2)} ৳</strong>
+            </div>`
+        ).join('');
+        
+        showToast(`মোট ${history.length} দিনের বিক্রয় ইতিহাস লোড করা হয়েছে।`, 'info');
+    }
+    
+    async function closeDayAndSaveHistory() {
+        const transactions = getLocalTransactions();
+        const dailySalesTotal = transactions.reduce((sum, t) => sum + t.total, 0);
+
+        if (transactions.length === 0) {
+            showToast("আজকের দিনে কোনো বিক্রয় হয়নি। দিন বন্ধ করার প্রয়োজন নেই।", 'info');
+            return;
+        }
+        
+        // Replaced native confirm with customConfirm
+        const confirmed = await customConfirm(`⚠️ আপনি কি নিশ্চিত যে আপনি আজকের দিনটি (${dailySalesTotal.toFixed(2)} ৳) বন্ধ করতে চান?\n\nএটি আজকের সমস্ত বিক্রয় ডেটা (Daily Transactions) মুছে দেবে এবং বিক্রয় ইতিহাসে সেভ করবে।`);
+        if (!confirmed) {
+            return;
+        }
+        
+        // 1. Update Monthly Total Sales 
+        const currentMonthlyTotal = getMonthlySalesTotal();
+        const newMonthlyTotal = currentMonthlyTotal + dailySalesTotal;
+        setMonthlySalesTotal(newMonthlyTotal); 
+
+        // 2. Create history object
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('bn-BD', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+        const historyItem = {
+            date: formattedDate,
+            total: dailySalesTotal,
+            transactionCount: transactions.length 
+        };
+        
+        // 3. Get current history and add new item
+        let history = getArchivedSalesHistory();
+        history.push(historyItem);
+        localStorage.setItem(ARCHIVED_SALES_KEY, JSON.stringify(history));
+        
+        // 4. Clear daily transactions
+        localStorage.removeItem(TRANSACTIONS_KEY);
+        
+        // 5. Update the display
+        loadDailySales(); 
+        
+        // CLEAN INTERFACE: Clear the display sections after closing the day
+        document.getElementById('transaction-list').innerHTML = '';
+        document.getElementById('archived-sales-list').innerHTML = '';
+        
+        // Replaced native alert with showToast
+        showToast(`✅ দিন শেষ সফল! ${formattedDate} তারিখের ${dailySalesTotal.toFixed(2)} ৳ বিক্রয় ইতিহাসে সেভ করা হয়েছে এবং মাসিক টোটালে যোগ হয়েছে।`, 'success');
+        closeModal('report-modal'); 
+    }
+    
+    function exportData() {
+        const transactions = getLocalTransactions();
+        if (transactions.length === 0) {
+            showToast("এক্সপোর্ট করার মতো কোনো ডেটা নেই।", 'info');
+            return;
+        }
+
+        // --- ENCODING FIX: Add UTF-8 BOM (\uFEFF) to the raw CSV content to ensure proper Bengali support in Excel ---
+        const BOM = "\uFEFF"; 
+        let rawCsvContent = BOM;
+        
+        // CSV Header (Simplified)
+        rawCsvContent += "ID,Table,Date,Total Sales,Item List (Name x Qty)\n";
+
+        // CSV Rows
+        transactions.forEach(t => {
+            // Ensure to remove commas from the Bengali item names/info to avoid splitting the cell content prematurely.
+            const itemListString = t.items.map(item => `${item.name.replace(/,/g, '')} x ${item.quantity}`).join(' | ');
+            
+            const row = [
+                t.orderId,
+                t.table,
+                `"${t.date.replace(/"/g, '""')}"`, 
+                t.total.toFixed(2), 
+                `"${itemListString.replace(/"/g, '""')}"` 
+            ].join(',');
+            rawCsvContent += row + "\n";
+        });
+
+        // Trigger download - Use encodeURIComponent for data URI content for correct encoding of special characters.
+        const encodedUri = "data:text/csv;charset=utf-8," + encodeURIComponent(rawCsvContent);
+        
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Matir_Ghran_Daily_Sales_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showToast("ডেটা সফলভাবে এক্সপোর্ট করা হয়েছে।", 'success');
+    }
+    
+    // --- 6. Admin Functions (Reset) ---
+
+    async function resetAllData() {
+        // Replaced native prompt/confirm chain with customPrompt and customConfirm
+        const password = await customPrompt("ডেটা রিসেট করতে পাসওয়ার্ড দিন:", 'password');
+        const correctPassword = "1234"; 
+
+        if (password === null) {
+            showToast("ডেটা রিসেট বাতিল করা হয়েছে।", 'info');
+            return; // User cancelled the prompt modal
+        }
+
+        if (password !== correctPassword) {
+            showToast("পাসওয়ার্ড ভুল! ডেটা রিসেট করা সম্ভব না।", 'error');
+            return;
+        }
+
+        const confirmed = await customConfirm("⚠️ সতর্কতা: আপনি কি নিশ্চিত যে সমস্ত ডেটা (মেনু, পেন্ডিং অর্ডার, বিক্রয় ইতিহাস) মুছে ফেলতে চান? এটি অপরিবর্তনীয়!");
+        if (!confirmed) {
+            showToast("ডেটা রিসেট বাতিল করা হয়েছে।", 'info');
+            return;
+        }
+
+        // Clear all relevant localStorage keys
+        localStorage.removeItem(MENU_KEY);
+        localStorage.removeItem(PENDING_KEY);
+        localStorage.removeItem(TRANSACTIONS_KEY);
+        localStorage.removeItem(ARCHIVED_SALES_KEY);
+        localStorage.removeItem(MONTHLY_SALES_TOTAL_KEY);
+        localStorage.removeItem(THEME_KEY); // <-- NEW: Clear theme setting
+
+        showToast("✅ সফলভাবে সমস্ত ডেটা রিসেট করা হয়েছে। পৃষ্ঠা রিলোড হচ্ছে...", 'success');
+        // Give time for the toast to show before reload
+        setTimeout(() => {
+            window.location.reload(); 
+        }, 1000); 
+    }
+
+</script>
+</body>
+</html>
