@@ -1306,6 +1306,52 @@
       .catch((err) => console.log('Service Worker registration failed', err));
   });
     }
+
+
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  // ব্রাউজারের ডিফল্ট মিনি-ইনফোবার বা অটো প্রম্পট থামিয়ে রাখা
+  e.preventDefault();
+  // ইভেন্টটি সেভ করে রাখা যাতে পরে ব্যবহার করা যায়
+  deferredPrompt = e;
+
+  // এখানে আপনি আপনার কাস্টম পপ-আপ বা ব্যানার দেখাতে পারেন
+  showInstallPromotion();
+});
+
+function showInstallPromotion() {
+  // উদাহরণস্বরূপ: স্ক্রিনের নিচে একটি সুন্দর ব্যানার বা পপ-আপ শো করতে পারেন
+  const installBanner = document.createElement('div');
+  installBanner.id = 'install-banner';
+  installBanner.innerHTML = `
+    <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2196F3; color: white; padding: 12px 20px; border-radius: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 15px; z-index: 9999; font-family: sans-serif;">
+      <span>📱 Install Train Tracker App</span>
+      <button id="install-btn" style="background: white; color: #2196F3; border: none; padding: 6px 12px; border-radius: 15px; font-weight: bold; cursor: pointer;">Install</button>
+      <button id="close-btn" style="background: transparent; color: white; border: none; font-size: 16px; cursor: pointer;">✕</button>
+    </div>
+  `;
+  document.body.appendChild(installBanner);
+
+  // ইনস্টল বাটনে ক্লিক করলে যা হবে
+  document.getElementById('install-btn').addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      }
+      deferredPrompt = null;
+    }
+    installBanner.remove();
+  });
+
+  // ক্রস বাটন ক্লিক করলে পপ-আপ হাইড হয়ে যাবে
+  document.getElementById('close-btn').addEventListener('click', () => {
+    installBanner.remove();
+  });
+}
+    
     
   </script>
 </head>
