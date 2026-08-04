@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>লাইভ ট্রেন ট্র্যাকার - Android Native Edition</title>
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#2196F3">
-  
+
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%232563eb'/%3E%3Cpath d='M112 120c0-13.3 10.7-24 24-24h240c13.3 0 24 10.7 24 24v192c0 35.3-28.7 64-64 64H176c-35.3 0-64-28.7-64-64V120zm32 32v120h224V152H144zm48 208a32 32 0 1 0 0 64 32 32 0 0 0 0-64zm176 0a32 32 0 1 0 0 64 32 32 0 0 0 0-64zM96 200h320v32H96v-32z' fill='%23ffffff'/%3E%3C/svg%3E">
   <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%232563eb'/%3E%3Cpath d='M112 120c0-13.3 10.7-24 24-24h240c13.3 0 24 10.7 24 24v192c0 35.3-28.7 64-64 64H176c-35.3 0-64-28.7-64-64V120zm32 32v120h224V152H144zm48 208a32 32 0 1 0 0 64 32 32 0 0 0 0-64zm176 0a32 32 0 1 0 0 64 32 32 0 0 0 0-64zM96 200h320v32H96v-32z' fill='%23ffffff'/%3E%3C/svg%3E">
 
@@ -595,13 +593,38 @@
     window.loginWithGoogle = async () => {
       try {
         showLoading("লগইন হচ্ছে...");
-        await signInWithPopup(auth, provider);
+        const result = await signInWithPopup(auth, provider);
+        
+        // Check URL for referral parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const refId = urlParams.get('ref');
+        if (refId && result.user) {
+          await processReferralBonus(refId, result.user.uid);
+        }
       } catch (err) {
         console.error("Login Error: ", err);
       } finally {
         hideLoading();
       }
     };
+
+    async function processReferralBonus(referrerId, newUserId) {
+      if (referrerId === newUserId) return; // Cannot refer self
+      try {
+        const refUserRef = doc(db, "users", referrerId);
+        const refSnap = await getDoc(refUserRef);
+        if (refSnap.exists()) {
+          const currentPts = refSnap.data().points || 0;
+          const currentWPts = refSnap.data().weeklyPoints || 0;
+          await updateDoc(refUserRef, {
+            points: Number((currentPts + 5).toFixed(1)),
+            weeklyPoints: Number((currentWPts + 5).toFixed(1))
+          });
+        }
+      } catch (e) {
+        console.error("Referral process error", e);
+      }
+    }
 
     window.logout = async () => {
       await signOut(auth);
@@ -614,11 +637,22 @@
 
       if (user) {
         currentUser = user;
+        
+        // Handle referral link if present on login state change
+        const urlParams = new URLSearchParams(window.location.search);
+        const refId = urlParams.get('ref');
+        if (refId) {
+          await processReferralBonus(refId, user.uid);
+          // Clean URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
         await syncUserData(user);
         checkAdminAccess(user);
         loadUserProfileData(user.uid);
         loadWeeklyLeaderboard();
         fetchAdSettings();
+        setupReferralLink(user.uid);
 
         if (loggedInView) loggedInView.style.display = 'block';
         if (loggedOutView) loggedOutView.style.display = 'none';
@@ -634,6 +668,27 @@
         if (loggedOutView) loggedOutView.style.display = 'block';
       }
     });
+
+    function setupReferralLink(uid) {
+      const refInput = document.getElementById('ref-link-input');
+      if (refInput) {
+        const refUrl = `${window.location.origin}${window.location.pathname}?ref=${uid}`;
+        refInput.value = refUrl;
+      }
+    }
+
+    window.copyReferralLink = () => {
+      const refInput = document.getElementById('ref-link-input');
+      if (refInput) {
+        refInput.select();
+        refInput.setSelectionRange(0, 99999); // For mobile devices
+        navigator.clipboard.writeText(refInput.value).then(() => {
+          showModal({ title: "সফল! 🎉", desc: "রেফারেল লিংক সফলভাবে কপি করা হয়েছে!", type: "alert" });
+        }).catch(err => {
+          console.error('Failed to copy: ', err);
+        });
+      }
+    };
 
     async function fetchAdSettings() {
       try {
@@ -774,7 +829,10 @@
       } else if (tabId === 'profile') {
         document.getElementById('screen-profile').classList.add('active');
         document.getElementById('nav-profile').classList.add('active');
-        if (currentUser) loadUserProfileData(currentUser.uid);
+        if (currentUser) {
+          loadUserProfileData(currentUser.uid);
+          setupReferralLink(currentUser.uid);
+        }
       }
     };
 
@@ -1298,61 +1356,6 @@
       hideLoading();
       showModal({ title: "ভোট সফল!", desc: `আপনার ভোট গ্রহণ করা হয়েছে এবং ০.২ পয়েন্ট যোগ করা হয়েছে (+০.২)`, type: "alert" });
     };
-
-    if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('Service Worker registered!', reg))
-      .catch((err) => console.log('Service Worker registration failed', err));
-  });
-    }
-
-
-let deferredPrompt;
-
-window.addEventListener('beforeinstallprompt', (e) => {
-  // ব্রাউজারের ডিফল্ট মিনি-ইনফোবার বা অটো প্রম্পট থামিয়ে রাখা
-  e.preventDefault();
-  // ইভেন্টটি সেভ করে রাখা যাতে পরে ব্যবহার করা যায়
-  deferredPrompt = e;
-
-  // এখানে আপনি আপনার কাস্টম পপ-আপ বা ব্যানার দেখাতে পারেন
-  showInstallPromotion();
-});
-
-function showInstallPromotion() {
-  // উদাহরণস্বরূপ: স্ক্রিনের নিচে একটি সুন্দর ব্যানার বা পপ-আপ শো করতে পারেন
-  const installBanner = document.createElement('div');
-  installBanner.id = 'install-banner';
-  installBanner.innerHTML = `
-    <div style="position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2196F3; color: white; padding: 12px 20px; border-radius: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 15px; z-index: 9999; font-family: sans-serif;">
-      <span>📱 Install Train Tracker App</span>
-      <button id="install-btn" style="background: white; color: #2196F3; border: none; padding: 6px 12px; border-radius: 15px; font-weight: bold; cursor: pointer;">Install</button>
-      <button id="close-btn" style="background: transparent; color: white; border: none; font-size: 16px; cursor: pointer;">✕</button>
-    </div>
-  `;
-  document.body.appendChild(installBanner);
-
-  // ইনস্টল বাটনে ক্লিক করলে যা হবে
-  document.getElementById('install-btn').addEventListener('click', async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
-      }
-      deferredPrompt = null;
-    }
-    installBanner.remove();
-  });
-
-  // ক্রস বাটন ক্লিক করলে পপ-আপ হাইড হয়ে যাবে
-  document.getElementById('close-btn').addEventListener('click', () => {
-    installBanner.remove();
-  });
-}
-    
-    
   </script>
 </head>
 <body>
@@ -1525,12 +1528,21 @@ function showInstallPromotion() {
             </div>
           </div>
 
-          <div style="margin-bottom: 16px; font-size: 13px; color: var(--muted);">
+          <div style="margin-bottom: 12px; font-size: 13px; color: var(--muted);">
             উপলব্ধ পয়েন্ট: <span id="profile-pts" style="font-weight:700; color:var(--accent);">0</span> Pt
           </div>
           
           <div class="st-box" id="user-ranking-box" style="background:#f8fafc; padding:14px; border-radius:12px; margin-bottom:12px;">
             <p style="font-size:12px; color:var(--muted); text-align:center;">র‍্যাংকিং লোড হচ্ছে...</p>
+          </div>
+
+          <!-- Referral Link Section -->
+          <div class="st-box" style="background:#f0fdf4; border-color:#bbf7d0; padding:12px; border-radius:12px; margin-bottom:12px;">
+            <label style="font-size:12px; font-weight:700; color:#166534; display:block; margin-bottom:6px;">🎁 আপনার রেফারেল লিংক (শেয়ার করলে ৫ পয়েন্ট পাবেন):</label>
+            <div style="display:flex; gap:6px;">
+              <input type="text" id="ref-link-input" readonly style="width:100%; padding:8px; border-radius:8px; border:1px solid #bbf7d0; font-size:11px; background:#ffffff; color:var(--primary); outline:none;">
+              <button type="button" onclick="copyReferralLink()" style="background:var(--success); color:white; border:none; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;">কপি</button>
+            </div>
           </div>
 
           <button type="button" onclick="logout()" style="background: #fee2e2; color: var(--danger); border: none; padding: 10px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; font-size: 13px;">লগআউট (Logout)</button>
