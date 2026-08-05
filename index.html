@@ -592,6 +592,31 @@
       flex-shrink: 0;
     }
     .chat-send-btn svg { width: 16px; height: 16px; fill: white; }
+
+
+/* Top Push-Down Banner Style */
+  #installPopup {
+    position: fixed;
+    top: -100px; /* শুরুতে স্ক্রিনের উপরে লুকিয়ে থাকবে */
+    left: 0;
+    width: 100%;
+    background: #1e293b;
+    color: #fff;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* স্মুথ স্লাইড অ্যানিমেশন */
+  }
+  #installPopup.show {
+    top: 0; /* স্ক্রিনে নেমে আসবে */
+  }
+
+    
   </style>
 
   <!-- Firebase SDKs -->
@@ -1780,28 +1805,50 @@
   <button id="installBtn" style="background:#0284c7; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:600; font-size:12px; cursor:pointer;">ইনস্টল</button>
 </div>
 
+<!-- Top Push-Down Install Banner -->
+<div id="installPopup">
+  <div style="display:flex; align-items:center; gap:10px; min-width: 0;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3067/3067425.png" width="36" height="36" style="border-radius:8px; flex-shrink:0;">
+    <div style="min-width: 0;">
+      <div style="font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Train Tracker ইনস্টল করুন</div>
+      <div style="font-size:10px; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">দ্রুত অ্যাক্সেসের জন্য হোম স্ক্রিনে রাখুন।</div>
+    </div>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+    <button id="installBtn" style="background:#0284c7; color:#fff; border:none; padding:7px 12px; border-radius:8px; font-weight:600; font-size:11px; cursor:pointer;">ইনস্টল</button>
+    <button id="closePopupBtn" style="background:transparent; color:#94a3b8; border:none; font-size:16px; cursor:pointer; padding:4px;">✕</button>
+  </div>
+</div>
+
 <script>
   // Service Worker Registration
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js')
-        .then((reg) => console.log('SW Registered:', reg.scope))
-        .catch((err) => console.log('SW Failed:', err));
+      navigator.serviceWorker.register('sw.js');
     });
   }
 
-  // Auto Install Prompt Logic
   let deferredPrompt;
   const installPopup = document.getElementById('installPopup');
   const installBtn = document.getElementById('installBtn');
+  const closePopupBtn = document.getElementById('closePopupBtn');
+
+  // অ্যাপটি অলরেডি PWA মোডে (ইনস্টল করা অবস্থায়) রান করলে পপ-আপ দেখাবে না
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    // সাইটে ঢুকার পরই পপ-আপ দেখাবে
-    setTimeout(() => {
-      installPopup.style.display = 'flex';
-    }, 1000);
+
+    if (!isPWA) {
+      // সাইটে ঢুকার ১ সেকেন্ড পর উপর থেকে স্লাইড হয়ে নিচে নেমে ধাক্কা দিয়ে জায়গা করে নেবে
+      setTimeout(() => {
+        installPopup.classList.add('show');
+        
+        // যদি সাইটের মেইন কন্টেন্ট বা বডিকে নিচে নামাতে চান:
+        // document.body.style.paddingTop = installPopup.offsetHeight + 'px';
+      }, 1000);
+    }
   });
 
   installBtn.addEventListener('click', async () => {
@@ -1812,17 +1859,24 @@
         console.log('User accepted the install prompt');
       }
       deferredPrompt = null;
-      installPopup.style.display = 'none';
+      hidePopup();
     }
   });
 
+  closePopupBtn.addEventListener('click', () => {
+    hidePopup();
+  });
+
+  function hidePopup() {
+    installPopup.classList.remove('show');
+    document.body.style.paddingTop = '0px';
+  }
+
   window.addEventListener('appinstalled', () => {
-    installPopup.style.display = 'none';
-    console.log('PWA was installed successfully');
+    hidePopup();
   });
 </script>
   
-
   
 </body>
 </html>
