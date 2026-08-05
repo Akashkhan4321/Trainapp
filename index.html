@@ -8,7 +8,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Train Tracker">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3067/3067425.png">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/5193/5193777.png">
+  
   
   <title>লাইভ ট্রেন ট্র্যাকার - Android Native Edition</title>
 
@@ -594,26 +595,93 @@
     .chat-send-btn svg { width: 16px; height: 16px; fill: white; }
 
 
-/* Top Push-Down Banner Style */
-  #installPopup {
-    position: fixed;
-    top: -100px; /* শুরুতে স্ক্রিনের উপরে লুকিয়ে থাকবে */
-    left: 0;
-    width: 100%;
-    background: #1e293b;
-    color: #fff;
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-    z-index: 99999;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1); /* স্মুথ স্লাইড অ্যানিমেশন */
+/* Center Install Modal Backdrop (Fixed for absolute center alignment) */
+  #installModalBackdrop {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    background: rgba(15, 23, 42, 0.4) !important;
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+    z-index: 999999 !important;
+    display: block;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
   }
-  #installPopup.show {
-    top: 0; /* স্ক্রিনে নেমে আসবে */
+
+  /* Modal Box - Guaranteed Center with margin: auto */
+  .install-modal {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-radius: 24px !important;
+    padding: 24px !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15) !important;
+    box-sizing: border-box !important;
+  }
+
+  .install-modal img {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 16px !important;
+    margin-bottom: 16px !important;
+    box-shadow: 0 8px 16px rgba(2, 132, 199, 0.2) !important;
+    display: block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .install-modal h3 {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    margin: 0 0 8px 0 !important;
+  }
+
+  .install-modal p {
+    font-size: 13px !important;
+    color: #64748b !important;
+    line-height: 1.5 !important;
+    margin: 0 0 20px 0 !important;
+  }
+
+  .install-modal-actions {
+    display: flex !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .modal-btn {
+    flex: 1 !important;
+    padding: 12px !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+    border: none !important;
+  }
+
+  .btn-install {
+    background: #0c18c2 !important;
+    color: #fff !important;
+  }
+
+  .btn-later {
+    background: #f1f5f9 !important;
+    color: #64748b !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
   }
 
     
@@ -1792,31 +1860,17 @@
   </div>
 </div>
 
-
-<!-- Custom Native Install Prompt UI (Optional Styling) -->
-<div id="installPopup" style="display:none; position:fixed; bottom:20px; left:20px; right:20px; background:#1e293b; color:#fff; padding:16px; border-radius:16px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:99999; display:flex; align-items:center; justify-content:space-between; gap:12px;">
-  <div style="display:flex; align-items:center; gap:12px;">
-    <img src="https://cdn-icons-png.flaticon.com/512/3067/3067425.png" width="40" height="40" style="border-radius:8px;">
-    <div>
-      <div style="font-weight:600; font-size:14px;">Train Tracker ইনস্টল করুন</div>
-      <div style="font-size:11px; color:#94a3b8;">দ্রুত অ্যাক্সেসের জন্য অ্যাপের মতো রাখুন।</div>
+<!-- Center Install Modal -->
+<div id="installModalBackdrop">
+  <div class="install-modal">
+    <img src="https://cdn-icons-png.flaticon.com/512/5193/5193777.png" alt="Train App Icon">
+     
+    <h3>Train Tracker ইনস্টল করুন</h3>
+    <p>দ্রুত এক্সেস এবং ইন্টারনেট ছাড়াও স্মুথ ব্যবহারের জন্য আপনার হোম স্ক্রিনে অ্যাপটি যুক্ত করুন।</p>
+    <div class="install-modal-actions">
+      <button class="modal-btn btn-later" id="closeModalBtn">পরে</button>
+      <button class="modal-btn btn-install" id="installBtn">ইনস্টল</button>
     </div>
-  </div>
-  <button id="installBtn" style="background:#0284c7; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:600; font-size:12px; cursor:pointer;">ইনস্টল</button>
-</div>
-
-<!-- Top Push-Down Install Banner -->
-<div id="installPopup">
-  <div style="display:flex; align-items:center; gap:10px; min-width: 0;">
-    <img src="https://cdn-icons-png.flaticon.com/512/3067/3067425.png" width="36" height="36" style="border-radius:8px; flex-shrink:0;">
-    <div style="min-width: 0;">
-      <div style="font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">Train Tracker ইনস্টল করুন</div>
-      <div style="font-size:10px; color:#94a3b8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">দ্রুত অ্যাক্সেসের জন্য হোম স্ক্রিনে রাখুন।</div>
-    </div>
-  </div>
-  <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
-    <button id="installBtn" style="background:#0284c7; color:#fff; border:none; padding:7px 12px; border-radius:8px; font-weight:600; font-size:11px; cursor:pointer;">ইনস্টল</button>
-    <button id="closePopupBtn" style="background:transparent; color:#94a3b8; border:none; font-size:16px; cursor:pointer; padding:4px;">✕</button>
   </div>
 </div>
 
@@ -1829,11 +1883,11 @@
   }
 
   let deferredPrompt;
-  const installPopup = document.getElementById('installPopup');
+  const modalBackdrop = document.getElementById('installModalBackdrop');
   const installBtn = document.getElementById('installBtn');
-  const closePopupBtn = document.getElementById('closePopupBtn');
+  const closeModalBtn = document.getElementById('closeModalBtn');
 
-  // অ্যাপটি অলরেডি PWA মোডে (ইনস্টল করা অবস্থায়) রান করলে পপ-আপ দেখাবে না
+  // অ্যাপটি অলরেডি PWA মোডে (ইনস্টল করা অবস্থায়) রান করলে মডাল দেখাবে না
   const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
 
   window.addEventListener('beforeinstallprompt', (e) => {
@@ -1841,13 +1895,10 @@
     deferredPrompt = e;
 
     if (!isPWA) {
-      // সাইটে ঢুকার ১ সেকেন্ড পর উপর থেকে স্লাইড হয়ে নিচে নেমে ধাক্কা দিয়ে জায়গা করে নেবে
+      // সাইটে ঢুকার ১.৫ সেকেন্ড পর মাঝখানে সুন্দরভাবে পপ-আপ হয়ে আসবে
       setTimeout(() => {
-        installPopup.classList.add('show');
-        
-        // যদি সাইটের মেইন কন্টেন্ট বা বডিকে নিচে নামাতে চান:
-        // document.body.style.paddingTop = installPopup.offsetHeight + 'px';
-      }, 1000);
+        modalBackdrop.style.display = 'flex';
+      }, 1500);
     }
   });
 
@@ -1859,21 +1910,27 @@
         console.log('User accepted the install prompt');
       }
       deferredPrompt = null;
-      hidePopup();
+      hideModal();
     }
   });
 
-  closePopupBtn.addEventListener('click', () => {
-    hidePopup();
+  closeModalBtn.addEventListener('click', () => {
+    hideModal();
   });
 
-  function hidePopup() {
-    installPopup.classList.remove('show');
-    document.body.style.paddingTop = '0px';
+  // ব্যাকগ্রাউন্ডে ক্লিক করলেও মডাল বন্ধ হয়ে যাবে
+  modalBackdrop.addEventListener('click', (e) => {
+    if (e.target === modalBackdrop) {
+      hideModal();
+    }
+  });
+
+  function hideModal() {
+    modalBackdrop.style.display = 'none';
   }
 
   window.addEventListener('appinstalled', () => {
-    hidePopup();
+    hideModal();
   });
 </script>
   
