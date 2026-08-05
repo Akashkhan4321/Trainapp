@@ -1887,20 +1887,21 @@
   const installBtn = document.getElementById('installBtn');
   const closeModalBtn = document.getElementById('closeModalBtn');
 
-  // অ্যাপটি অলরেডি PWA মোডে (ইনস্টল করা অবস্থায়) রান করলে মডাল দেখাবে না
-  const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  // পিসি বা মোবাইলে অলরেডি PWA মোডে চললে বা স্টালিন স্ট্যাটাস থাকলে চেক করবে
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
+  if (!isStandalone) {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // ব্রাউজারের ডিফল্ট পপ-আপ আটকে দেওয়া
+      e.preventDefault();
+      deferredPrompt = e;
 
-    if (!isPWA) {
-      // সাইটে ঢুকার ১.৫ সেকেন্ড পর মাঝখানে সুন্দরভাবে পপ-আপ হয়ে আসবে
+      // সাইটে ঢুকার ১.৫ সেকেন্ড পর মডাল দেখাবে
       setTimeout(() => {
         modalBackdrop.style.display = 'flex';
       }, 1500);
-    }
-  });
+    });
+  }
 
   installBtn.addEventListener('click', async () => {
     if (deferredPrompt) {
@@ -1918,7 +1919,7 @@
     hideModal();
   });
 
-  // ব্যাকগ্রাউন্ডে ক্লিক করলেও মডাল বন্ধ হয়ে যাবে
+  // ব্যাকগ্রাউন্ডে ক্লিক করলে মডাল বন্ধ হবে
   modalBackdrop.addEventListener('click', (e) => {
     if (e.target === modalBackdrop) {
       hideModal();
