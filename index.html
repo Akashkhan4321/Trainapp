@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Train Tracker">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3067/3067425.png">
+  
   <title>লাইভ ট্রেন ট্র্যাকার - Android Native Edition</title>
 
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='110' fill='%232563eb'/%3E%3Cpath d='M112 120c0-13.3 10.7-24 24-24h240c13.3 0 24 10.7 24 24v192c0 35.3-28.7 64-64 64H176c-35.3 0-64-28.7-64-64V120zm32 32v120h224V152H144zm48 208a32 32 0 1 0 0 64 32 32 0 0 0 0-64zm176 0a32 32 0 1 0 0 64 32 32 0 0 0 0-64zM96 200h320v32H96v-32z' fill='%23ffffff'/%3E%3C/svg%3E">
@@ -1760,5 +1767,62 @@
   </div>
 </div>
 
+
+<!-- Custom Native Install Prompt UI (Optional Styling) -->
+<div id="installPopup" style="display:none; position:fixed; bottom:20px; left:20px; right:20px; background:#1e293b; color:#fff; padding:16px; border-radius:16px; border:1px solid rgba(255,255,255,0.1); box-shadow:0 10px 25px rgba(0,0,0,0.5); z-index:99999; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+  <div style="display:flex; align-items:center; gap:12px;">
+    <img src="https://cdn-icons-png.flaticon.com/512/3067/3067425.png" width="40" height="40" style="border-radius:8px;">
+    <div>
+      <div style="font-weight:600; font-size:14px;">Train Tracker ইনস্টল করুন</div>
+      <div style="font-size:11px; color:#94a3b8;">দ্রুত অ্যাক্সেসের জন্য অ্যাপের মতো রাখুন।</div>
+    </div>
+  </div>
+  <button id="installBtn" style="background:#0284c7; color:#fff; border:none; padding:8px 14px; border-radius:8px; font-weight:600; font-size:12px; cursor:pointer;">ইনস্টল</button>
+</div>
+
+<script>
+  // Service Worker Registration
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then((reg) => console.log('SW Registered:', reg.scope))
+        .catch((err) => console.log('SW Failed:', err));
+    });
+  }
+
+  // Auto Install Prompt Logic
+  let deferredPrompt;
+  const installPopup = document.getElementById('installPopup');
+  const installBtn = document.getElementById('installBtn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // সাইটে ঢুকার পরই পপ-আপ দেখাবে
+    setTimeout(() => {
+      installPopup.style.display = 'flex';
+    }, 1000);
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+      }
+      deferredPrompt = null;
+      installPopup.style.display = 'none';
+    }
+  });
+
+  window.addEventListener('appinstalled', () => {
+    installPopup.style.display = 'none';
+    console.log('PWA was installed successfully');
+  });
+</script>
+  
+
+  
 </body>
 </html>
