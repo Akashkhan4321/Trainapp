@@ -3,7 +3,7 @@
   "short_name": "TrainTracker",
   "start_url": "/",
   "scope": "/",
-  "display": "standalone",
+  "display": "minimal-ui",
   "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
