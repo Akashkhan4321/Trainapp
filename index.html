@@ -684,7 +684,10 @@
     border: 1px solid rgba(0, 0, 0, 0.05) !important;
   }
 
-    
+    @keyframes pulseLogo {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    100% { transform: scale(1.05); opacity: 1; }
+    }
   </style>
 
   <!-- Firebase SDKs -->
@@ -1629,7 +1632,11 @@
   </script>
 </head>
 <body>
-
+<!-- Custom Pure White Splash Screen -->
+<div id="appSplashScreen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; background: #ffffff; display: flex; align-items: center; justify-content: center; z-index: 9999999; transition: opacity 0.4s ease;">
+  <img src="https://cdn-icons-png.flaticon.com/512/5193/5193777.png" alt="Splash Icon" style="width: 80px; height: 80px; filter: brightness(0); animation: pulseLogo 1.2s infinite alternate;">
+</div>
+  
 <div class="app-container">
   <div id="loading-overlay">
     <svg class="train-loader-icon" viewBox="0 0 512 512">
@@ -1933,7 +1940,23 @@
   window.addEventListener('appinstalled', () => {
     hideModal();
   });
+
+
+  
 </script>
+  <script>
+  window.addEventListener('load', () => {
+    const splash = document.getElementById('appSplashScreen');
+    if (splash) {
+      setTimeout(() => {
+        splash.style.opacity = '0';
+        setTimeout(() => {
+          splash.style.display = 'none';
+        }, 400); // ফেইড আউট হওয়ার জন্য ০.৪ সেকেন্ড সময় নেবে
+      }, 500); // আধ সেকেন্ড দেখানোর পর মেইন সাইট চলে আসবে
+    }
+  });
+  </script>
   
   
 </body>
