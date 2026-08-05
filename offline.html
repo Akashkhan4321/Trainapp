@@ -1,66 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>No Internet Connection</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: #333;
-        }
-        .offline-container {
-            text-align: center;
-            padding: 20px;
-        }
-        /* অ্যানিমেটেড ট্রেন বা সিগন্যাল আইকন */
-        .train-icon {
-            font-size: 64px;
-            animation: bounce 1.5s infinite alternate;
-            margin-bottom: 20px;
-        }
-        @keyframes bounce {
-            0% { transform: translateY(0); }
-            100% { transform: translateY(-15px); }
-        }
-        h2 {
-            margin-bottom: 10px;
-            color: #d9534f;
-        }
-        p {
-            color: #666;
-            font-size: 14px;
-            max-width: 300px;
-            margin: 0 auto 20px auto;
-        }
-        .retry-btn {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .retry-btn:hover {
-            background: #0b7dda;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>No Internet Connection - TrainTracker</title>
+  <meta name="theme-color" content="#1b6b55">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #f8f9fa;
+      color: #333333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .offline-card {
+      background: #ffffff;
+      padding: 40px 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      max-width: 400px;
+      width: 100%;
+    }
+
+    .icon-container {
+      width: 80px;
+      height: 80px;
+      background-color: #e6f4f1;
+      color: #1b6b55;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0 auto 24px auto;
+    }
+
+    .icon-container svg {
+      width: 40px;
+      height: 40px;
+      fill: currentColor;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #1b6b55;
+      margin-bottom: 12px;
+    }
+
+    p {
+      font-size: 14px;
+      color: #666666;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+
+    .retry-btn {
+      background-color: #1b6b55;
+      color: #ffffff;
+      border: none;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+      width: 100%;
+    }
+
+    .retry-btn:hover {
+      background-color: #145242;
+    }
+
+    .status-indicator {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #888888;
+    }
+  </style>
 </head>
 <body>
-    <div class="offline-container">
-        <div class="train-icon">🚂</div>
-        <h2>No Internet Connection</h2>
-        <p>You are currently offline. Please check your network connection to track live train updates.</p>
-        <button class="retry-btn" onclick="window.location.reload()">Try Again</button>
+
+  <div class="offline-card">
+    <div class="icon-container">
+      <!-- অফলাইন বা নো-নেটওয়ার্ক ভেক্টর আইকন -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <path d="M23.64 7c-.45-.34-4.93-3.7-11.64-3.7-1.5 0-2.93.22-4.28.61l1.83 1.83c.77-.12 1.56-.18 2.45-.18 5.79 0 9.87 2.92 11.33 3.99l1.31-1.04c-.38-.34-1.39-1.12-2.6-1.93zm-3.04 6.78l-1.46-1.46c-.53.22-1.12.38-1.78.48l1.44 1.44c.26-.14.54-.29.8-.46zm-17.72-9.5l-1.42 1.42 3.12 3.12c-2.02 1.34-3.52 2.87-4.14 3.39l1.31 1.04c.76-.56 2.05-1.63 3.92-2.68l2.67 2.67-1.42 1.42 1.42 1.42 16.28-16.28-1.42-1.42-4.59 4.59c-2.43-.88-5.22-1.36-8.11-1.36-2.58 0-5 .45-7.18 1.25l-3.32-3.32zm4.12 11.22l2.35 2.35c-.86.21-1.74.33-2.67.33-2.73 0-5.2-.67-7.18-1.85l1.31-1.04c1.55.85 3.51 1.4 6.19 1.42z"/>
+      </svg>
     </div>
+    
+    <h1>You're Offline</h1>
+    <p>ইন্টারনেট সংযোগ বিচ্ছিন্ন রয়েছে। সংযোগ ফিরে আসার সাথে সাথে পেজটি স্বয়ংক্রয়ভাবে রিলোড বা রিডাইরেক্ট হয়ে যাবে।</p>
+    
+    <button class="retry-btn" onclick="window.location.reload()">Try Again</button>
+    
+    <div class="status-indicator">Checking connection...</div>
+  </div>
+
+  <script>
+    // ইন্টারনেট ফিরে আসার সাথে সাথে অটোমেটিক মূল সাইটে (index.html) ফিরিয়ে নিয়ে যাবে
+    window.addEventListener('online', () => {
+      window.location.href = './index.html';
+    });
+  </script>
+
 </body>
 </html>
