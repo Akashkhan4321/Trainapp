@@ -1,20 +1,29 @@
-const CACHE_NAME = 'train-tracker-v2';
+const CACHE_NAME = 'train-tracker-v3';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/offline.html',
-  'https://cdn-icons-png.flaticon.com/512/3067/3067425.png'
+  './',
+  './index.html',
+  './offline.html',
+  './train.png',
+  './manifest.json'
 ];
 
+// ১. ইনস্টল করার সময় সাবধানে ক্যাশ করা (কোনো ফাইল মিসিং থাকলেও যেন ক্র্যাশ না করে)
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
+      return Promise.all(
+        urlsToCache.map(url => {
+          return cache.add(url).catch(err => {
+            console.log('Failed to cache: ', url, err);
+          });
+        })
+      );
     })
   );
   self.skipWaiting();
 });
 
+// ২. অ্যাক্টিভেট হওয়ার সময় পুরনো ক্যাশ ক্লিন করা
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -30,12 +39,25 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// ৩. ফেচ এবং অফলাইন হ্যান্ডেল করার লজিক
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request).then((response) => {
-        return response || caches.match('/offline.html');
-      });
-    })
+    fetch(event.request)
+      .then((response) => {
+        // ইন্টারনেট থাকলে রেসপন্স রিটার্ন করবে
+        return response;
+      })
+      .catch(() => {
+        // ইন্টারনেট না থাকলে ক্যাশ থেকে খোঁজা
+        return caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // যদি পেজ রিকোয়েস্ট হয় এবং ক্যাশে না থাকে, তবে offline.html দেখাবে
+          if (event.request.mode === 'navigate') {
+            return caches.match('./offline.html');
+          }
+        });
+      })
   );
 });
