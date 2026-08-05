@@ -1,6 +1,6 @@
 {
-  "name": "Train Tracker",
-  "short_name": "TrainTracker",
+  "name": "TrainKoi - Train Tracker",
+  "short_name": "TrainKoi",
   "start_url": "/",
   "scope": "/",
   "display": "minimal-ui",
