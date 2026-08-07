@@ -10,13 +10,13 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Train Tracker">
 
-  
-  
-  
   <title>TrainKoi - Live Train Tracker</title>
 
   <link rel="icon" type="image/png" href="./train.png">
 <link rel="apple-touch-icon" href="./train.png">
+  <!-- FontAwesome for Modern Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <style>
     :root {
       --primary: #0f172a;
@@ -289,6 +289,44 @@
       margin-top: 4px;
     }
 
+    .location-action-wrapper {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+
+    .see-location-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      transition: all 0.3s ease;
+      text-decoration: none;
+    }
+
+    .see-location-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.35);
+    }
+
+    .see-location-btn:active {
+      transform: translateY(0);
+    }
+
+    .see-location-btn i {
+      font-size: 1rem;
+    }
+
     .station-dropdown {
       width: 100%;
       padding: 12px;
@@ -511,7 +549,6 @@
     }
     .loading-text { font-size: 14px; font-weight: 700; color: var(--primary); }
 
-    /* Live Chat Styles */
     .chat-container {
       display: flex;
       flex-direction: column;
@@ -595,13 +632,10 @@
     }
     .chat-send-btn svg { width: 16px; height: 16px; fill: white; }
 
-
-/* Center Install Modal Backdrop (Fixed for absolute center alignment) */
   #installModalBackdrop {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
-    
     width: 100vw !important;
     height: 100vh !important;
     height: 100dvh !important;
@@ -616,7 +650,6 @@
     box-sizing: border-box !important;
   }
 
-  /* Modal Box - Guaranteed Center with margin: auto */
   .install-modal {
     background: #ffffff !important;
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -734,7 +767,10 @@
       document.getElementById('loading-overlay').style.display = 'none';
     }
 
-    window.showModal = ({ title, desc, type = "alert", inputPlaceholder = "", defaultValue = "", showSelect = false, selectOptions = [], onSubmit }) => {
+    let tempCapturedLat = null;
+    let tempCapturedLon = null;
+
+    window.showModal = ({ title, desc, type = "alert", inputPlaceholder = "", defaultValue = "", showSelect = false, selectOptions = [], onSubmit, showLocBtn = false }) => {
       const overlay = document.getElementById('custom-modal-overlay');
       document.getElementById('modal-title').innerText = title;
       document.getElementById('modal-desc').innerText = desc;
@@ -743,13 +779,35 @@
       const selectEl = document.getElementById('modal-select');
       const cancelBtn = document.getElementById('modal-cancel-btn');
       
+      let locBtnContainer = document.getElementById('modal-location-container');
+      if (!locBtnContainer) {
+        locBtnContainer = document.createElement('div');
+        locBtnContainer.id = 'modal-location-container';
+        locBtnContainer.style.cssText = 'margin-bottom: 14px;';
+        inputEl.parentNode.insertBefore(locBtnContainer, inputEl.nextSibling);
+      }
+
       if (type === "prompt") {
         inputEl.style.display = "block";
         inputEl.value = defaultValue;
         inputEl.placeholder = inputPlaceholder;
+        
+        if (showLocBtn) {
+            tempCapturedLat = null;
+            tempCapturedLon = null;
+            locBtnContainer.innerHTML = `
+              <button type="button" id="modalShareLocationBtn" onclick="fetchModalLiveLocation()" style="width: 100%; padding: 10px; background-color: #f1f3f5; border: 1px dashed #2563eb; color: #2563eb; font-weight: 600; font-size: 13px; border-radius: 12px; cursor: pointer; transition: all 0.3s ease;">
+                📍 Share Live Location (ট্রেনে থাকলে অন করুন)
+              </button>
+            `;
+            locBtnContainer.style.display = "block";
+        } else {
+            locBtnContainer.style.display = "none";
+        }
         setTimeout(() => inputEl.focus(), 50);
       } else {
         inputEl.style.display = "none";
+        locBtnContainer.style.display = "none";
       }
 
       if (showSelect) {
@@ -768,9 +826,38 @@
       window._activeModalSubmit = async () => {
         const val = inputEl.value;
         const selVal = selectEl.value;
+        const lat = tempCapturedLat;
+        const lon = tempCapturedLon;
         closeModal();
-        if (onSubmit) await onSubmit(val, selVal);
+        if (onSubmit) await onSubmit(val, selVal, lat, lon);
       };
+    };
+
+    window.fetchModalLiveLocation = () => {
+      const shareBtn = document.getElementById('modalShareLocationBtn');
+      if (navigator.geolocation) {
+        shareBtn.textContent = 'Fetching location...';
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            tempCapturedLat = position.coords.latitude;
+            tempCapturedLon = position.coords.longitude;
+            
+            shareBtn.textContent = '✔ Live Location: Done';
+            shareBtn.style.backgroundColor = '#16a34a';
+            shareBtn.style.color = 'white';
+            shareBtn.style.border = '1px solid #16a34a';
+          },
+          (error) => {
+            showModal({ title: "OOPS!", desc: "আপনার লোকেশন অন করুন", type: "alert" });
+            
+            
+            shareBtn.textContent = '📍 Share Live Location (ট্রেনে থাকলে অন করুন)';
+          },
+          { enableHighAccuracy: true }
+        );
+      } else {
+        showModal({ title: "ক্রুটি", desc: "আপনার ব্রাউজার লোকেশন সাপোর্ট করে না", type: "alert" });
+      }
     };
 
     window.closeModal = () => {
@@ -858,9 +945,13 @@
 
     function setupReferralLink(uid) {
       const refInput = document.getElementById('ref-link-input');
+      const qrContainer = document.getElementById('ref-qr-code');
       if (refInput) {
         const refUrl = `${window.location.origin}${window.location.pathname}?ref=${uid}`;
         refInput.value = refUrl;
+        if (qrContainer) {
+          qrContainer.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(refUrl)}" alt="Referral QR" style="width: 100px; height: 100px; border-radius: 8px; border: 1px solid var(--border);" />`;
+        }
       }
     }
 
@@ -885,6 +976,34 @@
         }
       } catch (e) {
         console.error("Ad settings fetch error", e);
+      }
+    }
+
+    async function loadHomeSettings() {
+      try {
+        const homeSnap = await getDoc(doc(db, "settings", "home"));
+        const videoWrapper = document.getElementById('home-video-wrapper');
+        if (homeSnap.exists()) {
+          const d = homeSnap.data();
+          if (d.youtubeUrl) {
+            let embedUrl = d.youtubeUrl;
+            if (embedUrl.includes("watch?v=")) {
+              embedUrl = embedUrl.replace("watch?v=", "embed/");
+            } else if (embedUrl.includes("youtu.be/")) {
+              embedUrl = embedUrl.replace("youtu.be/", "www.youtube.com/embed/");
+            }
+            videoWrapper.innerHTML = `
+              <div style="position: relative; width: 100%; padding-bottom: 56.25%; height: 0; border-radius: 12px; overflow: hidden; background: #000; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+                <iframe src="${embedUrl}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border:0;" allowfullscreen></iframe>
+              </div>
+            `;
+            videoWrapper.style.display = 'block';
+          } else {
+            videoWrapper.style.display = 'none';
+          }
+        }
+      } catch(e) {
+        console.error("Home settings fetch error", e);
       }
     }
 
@@ -962,7 +1081,6 @@
       }
     }
 
-    // Live Chat Functions
     async function cleanupOldChatMessages() {
       try {
         const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
@@ -1047,6 +1165,7 @@
       if (tabId === 'home') {
         document.getElementById('screen-dir').classList.add('active');
         document.getElementById('nav-home').classList.add('active');
+        loadHomeSettings();
       } else if (tabId === 'heroes') {
         document.getElementById('screen-heroes').classList.add('active');
         document.getElementById('nav-heroes').classList.add('active');
@@ -1100,6 +1219,7 @@
       }
       document.getElementById(from).classList.remove('active');
       document.getElementById(to).classList.add('active');
+      if(to === 'screen-dir') loadHomeSettings();
     };
 
     window.verifyAdminAndOpenDashboard = () => {
@@ -1108,6 +1228,7 @@
         desc: "ড্যাশবোর্ডে প্রবেশ করতে পাসওয়ার্ড দিন।",
         type: "prompt",
         inputPlaceholder: "পাসওয়ার্ড দিন...",
+        showLocBtn: false, // লোকেশন বাটন রিমুভড
         onSubmit: async (val) => {
           if (val === ADMIN_PASSWORD) {
             loadAdminDashboard();
@@ -1132,16 +1253,23 @@
           document.getElementById('admin-ad-url').value = d.adUrl || "";
           document.getElementById('admin-ad-duration').value = d.adDuration || 10;
         }
+        const homeSnap = await getDoc(doc(db, "settings", "home"));
+        if (homeSnap.exists()) {
+          const d = homeSnap.data();
+          document.getElementById('admin-home-video').value = d.youtubeUrl || "";
+        }
       } catch(e) {}
     }
 
     window.switchAdminTab = (tabName) => {
       document.getElementById('tab-trains-content').style.display = tabName === 'trains' ? 'block' : 'none';
       document.getElementById('tab-ads-content').style.display = tabName === 'ads' ? 'block' : 'none';
+      document.getElementById('tab-home-content').style.display = tabName === 'home' ? 'block' : 'none';
       document.getElementById('tab-leaderboard-content').style.display = tabName === 'leaderboard' ? 'block' : 'none';
       
       document.getElementById('tab-btn-trains').className = `admin-tab ${tabName === 'trains' ? 'active' : ''}`;
       document.getElementById('tab-btn-ads').className = `admin-tab ${tabName === 'ads' ? 'active' : ''}`;
+      document.getElementById('tab-btn-home').className = `admin-tab ${tabName === 'home' ? 'active' : ''}`;
       document.getElementById('tab-btn-leaderboard').className = `admin-tab ${tabName === 'leaderboard' ? 'active' : ''}`;
     };
 
@@ -1155,6 +1283,16 @@
       globalAdSettings = { adUrl, adDuration };
       hideLoading();
       showModal({ title: "সফল", desc: "অ্যাড লিংক ও সময়সীমা সফলভাবে আপডেট করা হয়েছে!", type: "alert" });
+    };
+
+    window.saveAdminHomeSettings = async (e) => {
+      e.preventDefault();
+      showLoading("হোম সেটিংস সেভ হচ্ছে...");
+      const youtubeUrl = document.getElementById('admin-home-video').value.trim();
+
+      await setDoc(doc(db, "settings", "home"), { youtubeUrl }, { merge: true });
+      hideLoading();
+      showModal({ title: "সফল", desc: "হোম পেজের ভিডিও সফলভাবে আপডেট করা হয়েছে!", type: "alert" });
     };
 
     window.startWatchingAd = async () => {
@@ -1339,10 +1477,10 @@
       const nameInputs = document.querySelectorAll('.st-name');
       const timeInputs = document.querySelectorAll('.st-time');
       
-      nameInputs.forEach((el, idx) => {
+      nameInputs.forEach((el) => {
         el.setAttribute('value', el.value);
       });
-      timeInputs.forEach((el, idx) => {
+      timeInputs.forEach((el) => {
         el.setAttribute('value', el.value);
       });
 
@@ -1385,7 +1523,6 @@
       goBack('screen-admin-hub', 'screen-dir');
     };
 
-    // Helper to calculate relative time in Bangla
     function getRelativeTimeBangla(timestamp) {
       if (!timestamp) return "তথ্য নেই";
       const now = Date.now();
@@ -1408,8 +1545,10 @@
 
     async function openDetails(trainId, trainData) {
       if (!currentUser) {
-        await loginWithGoogle();
-        if (!auth.currentUser) return;
+        // লগইন না থাকলে সরাসরি প্রোফাইল পেজে পাঠিয়ে দিবে
+        switchTab('profile');
+        showModal({ title: "লগইন প্রয়োজন", desc: "ট্রেন ডিটেইলস দেখতে এবং আপডেট করতে দয়া করে লগইন করুন।", type: "alert" });
+        return;
       }
 
       showLoading("চেক করা হচ্ছে...");
@@ -1423,8 +1562,6 @@
         return;
       }
 
-      // Viewer point deduction and transfer logic:
-      // Viewer point gets deducted by 1, but instead of burning, if there's a valid lastUpdaterUid, transfer that 1 point to them.
       let updatedPts = Number((currentPts - 1).toFixed(1));
       let updates = { points: updatedPts };
 
@@ -1467,9 +1604,22 @@
           const data = snap.data();
           document.getElementById('t-name').innerText = data.name;
           document.getElementById('t-route').innerText = data.route;
-          document.getElementById('t-loc').innerText = data.currentLocation;
           
-          // Display relative time in Bangla
+          document.getElementById('t-loc').innerText = data.currentLocation || "তথ্য নেই";
+          
+          const locActionWrapper = document.getElementById('location-action-btn-wrapper');
+          if (data.latitude && data.longitude) {
+            locActionWrapper.innerHTML = `
+              <a href="https://www.google.com/maps?q=${data.latitude},${data.longitude}" target="_blank" class="see-location-btn">
+                <i class="fa-solid fa-location-dot"></i> See Location
+              </a>
+            `;
+            locActionWrapper.style.display = 'flex';
+          } else {
+            locActionWrapper.innerHTML = '';
+            locActionWrapper.style.display = 'none';
+          }
+          
           const relTime = getRelativeTimeBangla(data.lastUpdatedTimestamp);
           const updaterName = data.lastUpdaterName || "তথ্য নেই";
           document.getElementById('t-last-update').innerText = `${updaterName} > ${relTime}`;
@@ -1534,11 +1684,14 @@
         desc: "বর্তমান লোকেশন লিখুন:",
         type: "prompt",
         inputPlaceholder: "যেমন: ঢাকা স্টেশন",
-        onSubmit: async (loc) => { if(loc) executeLocationUpdate(loc.trim()); }
+        showLocBtn: true, // এখানে লোকেশন বাটন রাখা হলো
+        onSubmit: async (loc, selVal, lat, lon) => { 
+          if(loc) executeLocationUpdate(loc.trim(), lat, lon); 
+        }
       });
     };
 
-    async function executeLocationUpdate(locationText) {
+    async function executeLocationUpdate(locationText, lat = null, lon = null) {
       showLoading("আপডেট করা হচ্ছে...");
       const trainRef = doc(db, "trains", currentSelectedTrainId);
       const trainSnap = await getDoc(trainRef);
@@ -1554,14 +1707,24 @@
         return;
       }
       
-      await updateDoc(trainRef, {
+      let updateData = {
         currentLocation: locationText,
         lastUpdated: `${currentUser.displayName}`,
         lastUpdatedTimestamp: now,
         lastUpdaterUid: currentUser.uid,
         lastUpdaterName: currentUser.displayName || "ব্যবহারকারী",
         voters: {}
-      });
+      };
+
+      if (lat !== null && lon !== null) {
+        updateData.latitude = lat;
+        updateData.longitude = lon;
+      } else {
+        updateData.latitude = null;
+        updateData.longitude = null;
+      }
+
+      await updateDoc(trainRef, updateData);
 
       const userRef = doc(db, "users", currentUser.uid);
       const userSnap = await getDoc(userRef);
@@ -1606,6 +1769,8 @@
           lastUpdatedTimestamp: 0,
           lastUpdaterUid: "",
           lastUpdaterName: "",
+          latitude: null,
+          longitude: null,
           voters: {}
         });
         hideLoading();
@@ -1630,10 +1795,16 @@
       hideLoading();
       showModal({ title: "ভোট সফল!", desc: `আপনার ভোট গ্রহণ করা হয়েছে এবং ০.২ পয়েন্ট যোগ করা হয়েছে (+০.২)`, type: "alert" });
     };
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadHomeSettings();
+    });
   </script>
 </head>
 <body>
-<!-- Custom Pure White Splash Screen -->
+<!-- ... (বাকি কোড আগের মতোই থাকবে, শুধু ওপরে দেওয়া স্ক্রিপ্ট পরিবর্তন করুন) -->
+
+      
 <div id="appSplashScreen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; background: #ffffff; display: flex; align-items: center; justify-content: center; z-index: 9999999; transition: opacity 0.4s ease;flex-direction:column">
   <img src="https://cdn-icons-png.flaticon.com/512/5193/5193777.png" alt="Splash Icon" style="width: 80px; height: 80px; filter: brightness(0); animation: pulseLogo 1.2s infinite alternate;">
 <h2>ট্রেন<span style="color:#07735f;margin-top:30px">কই?</h2>
@@ -1642,16 +1813,16 @@
 <div class="app-container">
   <div id="loading-overlay">
     <svg class="train-loader-icon" viewBox="0 0 512 512">
-      <path d="M112 120c0-13.3 10.7-24 24-24h240c13.3 0 24 10.7 24 24v192c0 35.3-28.7 64-64 64H176c-35.3 0-64-28.7-64-64V120zm32 32v120h224V152H144zm48 208a32 32 0 1 0 0 64 32 32 0 0 0 0-64zm176 0a32 32 0 1 0 0 64 32 32 0 0 0 0-64zM96 200h320v32H96v-32z"/>
+      <path d="M112 120c0-13.3 10.7-24 24-24h240c13.3 0 24 10.7 24 24v192c0 35.3-28.7 64-64 64H176c-35.3 0-64-28.7-64-64V120zm32 32v120h224V152H144zm48 208a32 32 0 1 0 0 64 32 32 0 0 0 0-64zm176 0a32 32 0 1 0 0 64 32 32 0 0 0 0-64ZкономM96 200h320v32H96v-32z"/>
     </svg>
     <div class="loading-text" id="loading-text">লোড হচ্ছে...</div>
   </div>
 
   <div class="header">
     <div class="brand">
-  <img src="https://cdn-icons-png.flaticon.com/512/5193/5193777.png" alt="Logo" style="width: 35px; height: 35px; object-fit: contain;">
-  <div>ট্রেন<span style="color:#07735f;">কই?</span></div>
-</div>
+      <img src="https://cdn-icons-png.flaticon.com/512/5193/5193777.png" alt="Logo" style="width: 35px; height: 35px; object-fit: contain;">
+      <div>ট্রেন<span style="color:#07735f;">কই?</span></div>
+    </div>
 
     <div class="points-badge" onclick="switchTab('profile')">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M15 9.5H10.5A1.5 1.5 0 0 0 9 11v0a1.5 1.5 0 0 0 1.5 1.5h3A1.5 1.5 0 0 1 15 14v0a1.5 1.5 0 0 1-1.5 1.5H9"/></svg>
@@ -1682,6 +1853,9 @@
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
       </button>
 
+      <!-- Embedded YouTube Video Container -->
+      <div id="home-video-wrapper" style="margin-top: 10px; margin-bottom: 14px; display: none;"></div>
+
       <div id="admin-trigger-container" style="display: none;">
         <button class="btn-add-trigger" onclick="verifyAdminAndOpenDashboard()">
           ⚙️ এডমিন ড্যাশবোর্ড ও ট্রেন ম্যানেজ
@@ -1695,6 +1869,7 @@
       <div class="admin-nav-tabs">
         <div id="tab-btn-trains" class="admin-tab active" onclick="switchAdminTab('trains')">ট্রেন ম্যানেজ</div>
         <div id="tab-btn-ads" class="admin-tab" onclick="switchAdminTab('ads')">অ্যাড সেটিংস</div>
+        <div id="tab-btn-home" class="admin-tab" onclick="switchAdminTab('home')">হোম ভিডিও</div>
         <div id="tab-btn-leaderboard" class="admin-tab" onclick="switchAdminTab('leaderboard')">সাপ্তাহিক লিডারবোর্ড</div>
       </div>
 
@@ -1734,6 +1909,16 @@
         </form>
       </div>
 
+      <div id="tab-home-content" style="display: none;">
+        <form onsubmit="saveAdminHomeSettings(event)">
+          <div class="form-group">
+            <label>হোম পেজ ইউটিউব ভিডিও লিংক (URL):</label>
+            <input type="text" id="admin-home-video" placeholder="https://www.youtube.com/watch?v=...">
+          </div>
+          <button type="submit" class="act-btn btn-update" style="margin-top: 10px;">হোম ভিডিও সেভ করুন</button>
+        </form>
+      </div>
+
       <div id="tab-leaderboard-content" style="display: none;">
         <h5 style="font-size: 14px; font-weight: 800; color: var(--primary); margin-bottom: 10px;">সাপ্তাহিক শীর্ষ অবদানকারীগণ</h5>
         <div id="admin-leaderboard-container"></div>
@@ -1758,6 +1943,9 @@
           <div style="font-size: 10px; color: var(--success); margin-top: 4px; font-weight: 700;"></div>
         </div>
         
+         <!-- আপডেট বক্সের বাইরে আধুনিক লোকেশন বাটন সেকশন -->
+      <div class="location-action-wrapper" id="location-action-btn-wrapper" style="display: none;"></div>
+        
         <div class="update-info-wrapper">
           <span id="t-last-update">আপডেট: তথ্য নেই</span>
           <span class="cooldown-timer" id="cooldown-timer">60s</span>
@@ -1769,6 +1957,8 @@
         </div>
       </div>
 
+     
+
       <div class="timetable-box">
         <h5>সময়সূচী</h5>
         <table class="tbl"><tbody id="tbl-body"></tbody></table>
@@ -1779,7 +1969,6 @@
     <div id="screen-heroes" class="view-screen">
       <div style="margin-bottom: 10px; flex-shrink: 0;">
         <h4 style="font-size: 16px; font-weight: 800; color: var(--primary);">💬 লাইভ চ্যাট</h4>
-       
       </div>
       <div class="chat-container">
         <div class="chat-messages" id="chat-messages">
@@ -1820,18 +2009,17 @@
             বর্তমান পয়েন্ট: <span id="profile-pts" style="font-weight:700; color:var(--accent);">0</span> Pt
           </div>
           
-          
           <div class="st-box" id="user-ranking-box" style="background:#f8fafc; padding:14px; border-radius:12px; margin-bottom:12px;">
             <p style="font-size:12px; color:var(--muted); text-align:center;">র‍্যাংকিং লোড হচ্ছে...</p>
           </div>
 
-          <!-- Referral Link Section -->
           <div class="st-box" style="background:#f0fdf4; border-color:#bbf7d0; padding:12px; border-radius:12px; margin-bottom:12px;">
-            <label style="font-size:12px; font-weight:700; color:#166534; display:block; margin-bottom:6px;">🎁 আপনার রেফারেল লিংক (শেয়ার করলে ৫ পয়েন্ট পাবেন):</label>
-            <div style="display:flex; gap:6px;">
+            <label style="font-size:12px; font-weight:700; color:#166534; display:block; margin-bottom:6px;">আপনার রেফারেল লিংক (শেয়ার করলে ৫ পয়েন্ট পাবেন):</label>
+            <div style="display:flex; gap:6px; margin-bottom:10px;">
               <input type="text" id="ref-link-input" readonly style="width:100%; padding:8px; border-radius:8px; border:1px solid #bbf7d0; font-size:11px; background:#ffffff; color:var(--primary); outline:none;">
               <button type="button" onclick="copyReferralLink()" style="background:var(--success); color:white; border:none; padding:8px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; white-space:nowrap;">কপি</button>
             </div>
+            <div id="ref-qr-code" style="display:flex; justify-content:center; align-items:center;"></div>
           </div>
 
           <button type="button" onclick="logout()" style="background: #fee2e2; color: var(--danger); border: none; padding: 10px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; font-size: 13px;">লগআউট (Logout)</button>
@@ -1870,11 +2058,9 @@
   </div>
 </div>
 
-<!-- Center Install Modal -->
 <div id="installModalBackdrop">
   <div class="install-modal">
     <img src="https://cdn-icons-png.flaticon.com/512/5193/5193777.png" alt="Train App Icon">
-     
     <h3>Train Tracker ইনস্টল করুন</h3>
     <p>দ্রুত এক্সেস এবং ইন্টারনেট ছাড়াও স্মুথ ব্যবহারের জন্য আপনার হোম স্ক্রিনে অ্যাপটি যুক্ত করুন।</p>
     <div class="install-modal-actions">
@@ -1885,7 +2071,6 @@
 </div>
 
 <script>
-  // Service Worker Registration
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js');
@@ -1897,16 +2082,13 @@
   const installBtn = document.getElementById('installBtn');
   const closeModalBtn = document.getElementById('closeModalBtn');
 
-  // পিসি বা মোবাইলে অলরেডি PWA মোডে চললে বা স্টালিন স্ট্যাটাস থাকলে চেক করবে
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
   if (!isStandalone) {
     window.addEventListener('beforeinstallprompt', (e) => {
-      // ব্রাউজারের ডিফল্ট পপ-আপ আটকে দেওয়া
       e.preventDefault();
       deferredPrompt = e;
 
-      // সাইটে ঢুকার ১.৫ সেকেন্ড পর মডাল দেখাবে
       setTimeout(() => {
         modalBackdrop.style.display = 'flex';
       }, 1500);
@@ -1929,7 +2111,6 @@
     hideModal();
   });
 
-  // ব্যাকগ্রাউন্ডে ক্লিক করলে মডাল বন্ধ হবে
   modalBackdrop.addEventListener('click', (e) => {
     if (e.target === modalBackdrop) {
       hideModal();
@@ -1944,18 +2125,16 @@
     hideModal();
   });
 
-// ব্রাউজার যদি অফলাইন হয়ে যায়
   window.addEventListener('offline', () => {
     window.location.href = './offline.html';
   });
 
-  // পেজ লোড হওয়ার সময় ইন্টারনেট না থাকলে চেক করবে
   if (!navigator.onLine) {
     window.location.href = './offline.html';
   }
-  
 </script>
-  <script>
+
+<script>
   window.addEventListener('load', () => {
     const splash = document.getElementById('appSplashScreen');
     if (splash) {
@@ -1963,12 +2142,10 @@
         splash.style.opacity = '0';
         setTimeout(() => {
           splash.style.display = 'none';
-        }, 400); // ফেইড আউট হওয়ার জন্য ০.৪ সেকেন্ড সময় নেবে
-      }, 500); // আধ সেকেন্ড দেখানোর পর মেইন সাইট চলে আসবে
+        }, 400);
+      }, 500);
     }
   });
-  </script>
-  
-  
+</script>
 </body>
 </html>
