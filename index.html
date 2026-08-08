@@ -4,16 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#07917d">
+  <meta name="theme-color" content="#07917d">
   <meta name="color-scheme" content="light">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Train Tracker">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Train Tracker">
 
   <title>TrainKoi - Live Train Tracker</title>
 
   <link rel="icon" type="image/png" href="./train.png">
-<link rel="apple-touch-icon" href="./train.png">
+  <link rel="apple-touch-icon" href="./train.png">
   <!-- FontAwesome for Modern Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
@@ -49,7 +49,25 @@
       height: 100dvh;
       overflow: hidden;
     }
-      #zero-point-container{display:none;}
+
+    /* PWA Splash Screen Styles (Default Hidden) */
+    #appSplashScreen {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      background: #ffffff;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999999;
+      flex-direction: column;
+      transition: opacity 0.4s ease;
+    }
+
+    #zero-point-container{display:none;}
     .app-container {
       width: 100%;
       max-width: 420px;
@@ -719,29 +737,11 @@
   }
 
     @keyframes pulseLogo {
-    0% { transform: scale(0.95); opacity: 0.8; }
-    100% { transform: scale(1.05); opacity: 1; }
+      0% { transform: scale(0.95); opacity: 0.8; }
+      100% { transform: scale(1.05); opacity: 1; }
     }
   </style>
-<script>
-  window.addEventListener('load', () => {
-    const splash = document.getElementById('appSplashScreen');
-    
-    // Check if app is running in Standalone (PWA) mode
-    const isPwaMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-    if (isPwaMode && splash) {
-      splash.style.display = 'flex';
-      setTimeout(() => {
-        splash.style.opacity = '0';
-        setTimeout(() => {
-          splash.style.display = 'none';
-        }, 400);
-      }, 800);
-    }
-  });
-</script>
-  
   <!-- Firebase SDKs -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -867,8 +867,6 @@
           },
           (error) => {
             showModal({ title: "OOPS!", desc: "আপনার লোকেশন অন করুন", type: "alert" });
-            
-            
             shareBtn.textContent = '📍 Share Live Location (ট্রেনে থাকলে অন করুন)';
           },
           { enableHighAccuracy: true }
@@ -1820,11 +1818,22 @@
 </head>
 <body>
 
-<!-- PWA Splash Screen (Visible only in Standalone/PWA mode) -->
-<div id="appSplashScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; background: #ffffff; align-items: center; justify-content: center; z-index: 9999999; transition: opacity 0.4s ease; flex-direction: column;">
+<!-- PWA Splash Screen (Placed at the very beginning of body to show instantly in standalone mode) -->
+<div id="appSplashScreen">
   <img src="https://cdn-icons-png.flaticon.com/512/5193/5193777.png" alt="Splash Icon" style="width: 80px; height: 80px; filter: brightness(0); animation: pulseLogo 1.2s infinite alternate;">
   <h2 style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 15px;">ট্রেন<span style="color:#07735f;">কই?</span></h2>
 </div>
+
+<script>
+  // Immediately show splash screen if running in standalone PWA mode before anything renders
+  (function() {
+    const isPwaMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isPwaMode) {
+      const splash = document.getElementById('appSplashScreen');
+      if (splash) splash.style.display = 'flex';
+    }
+  })();
+</script>
   
 <div class="app-container">
   <div id="loading-overlay">
@@ -2147,6 +2156,20 @@
   }
 </script>
 
+<script>
+  window.addEventListener('load', () => {
+    const splash = document.getElementById('appSplashScreen');
+    const isPwaMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
+    if (isPwaMode && splash) {
+      setTimeout(() => {
+        splash.style.opacity = '0';
+        setTimeout(() => {
+          splash.style.display = 'none';
+        }, 400);
+      }, 800);
+    }
+  });
+</script>
 </body>
 </html>
