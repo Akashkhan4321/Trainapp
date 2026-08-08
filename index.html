@@ -1228,7 +1228,7 @@
         desc: "ড্যাশবোর্ডে প্রবেশ করতে পাসওয়ার্ড দিন।",
         type: "prompt",
         inputPlaceholder: "পাসওয়ার্ড দিন...",
-        showLocBtn: false, // লোকেশন বাটন রিমুভড
+        showLocBtn: false,
         onSubmit: async (val) => {
           if (val === ADMIN_PASSWORD) {
             loadAdminDashboard();
@@ -1545,7 +1545,6 @@
 
     async function openDetails(trainId, trainData) {
       if (!currentUser) {
-        // লগইন না থাকলে সরাসরি প্রোফাইল পেজে পাঠিয়ে দিবে
         switchTab('profile');
         showModal({ title: "লগইন প্রয়োজন", desc: "ট্রেন ডিটেইলস দেখতে এবং আপডেট করতে দয়া করে লগইন করুন।", type: "alert" });
         return;
@@ -1684,7 +1683,7 @@
         desc: "বর্তমান লোকেশন লিখুন:",
         type: "prompt",
         inputPlaceholder: "যেমন: ঢাকা স্টেশন",
-        showLocBtn: true, // এখানে লোকেশন বাটন রাখা হলো
+        showLocBtn: true,
         onSubmit: async (loc, selVal, lat, lon) => { 
           if(loc) executeLocationUpdate(loc.trim(), lat, lon); 
         }
@@ -1802,12 +1801,11 @@
   </script>
 </head>
 <body>
-<!-- ... (বাকি কোড আগের মতোই থাকবে, শুধু ওপরে দেওয়া স্ক্রিপ্ট পরিবর্তন করুন) -->
 
-      
-<div id="appSplashScreen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; background: #ffffff; display: flex; align-items: center; justify-content: center; z-index: 9999999; transition: opacity 0.4s ease;flex-direction:column">
+<!-- PWA Splash Screen (Visible only in Standalone/PWA mode) -->
+<div id="appSplashScreen" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100dvh; background: #ffffff; align-items: center; justify-content: center; z-index: 9999999; transition: opacity 0.4s ease; flex-direction: column;">
   <img src="https://cdn-icons-png.flaticon.com/512/5193/5193777.png" alt="Splash Icon" style="width: 80px; height: 80px; filter: brightness(0); animation: pulseLogo 1.2s infinite alternate;">
-<h2>ট্রেন<span style="color:#07735f;margin-top:30px">কই?</h2>
+  <h2 style="font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 15px;">ট্রেন<span style="color:#07735f;">কই?</span></h2>
 </div>
   
 <div class="app-container">
@@ -1943,8 +1941,7 @@
           <div style="font-size: 10px; color: var(--success); margin-top: 4px; font-weight: 700;"></div>
         </div>
         
-         <!-- আপডেট বক্সের বাইরে আধুনিক লোকেশন বাটন সেকশন -->
-      <div class="location-action-wrapper" id="location-action-btn-wrapper" style="display: none;"></div>
+        <div class="location-action-wrapper" id="location-action-btn-wrapper" style="display: none;"></div>
         
         <div class="update-info-wrapper">
           <span id="t-last-update">আপডেট: তথ্য নেই</span>
@@ -1956,8 +1953,6 @@
           <button class="vote-btn vote-no" onclick="castVote('no')">👎 বেঠিক (<span id="vote-no-count">0</span>)</button>
         </div>
       </div>
-
-     
 
       <div class="timetable-box">
         <h5>সময়সূচী</h5>
@@ -2137,13 +2132,18 @@
 <script>
   window.addEventListener('load', () => {
     const splash = document.getElementById('appSplashScreen');
-    if (splash) {
+    
+    // Check if app is running in Standalone (PWA) mode
+    const isPwaMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    if (isPwaMode && splash) {
+      splash.style.display = 'flex';
       setTimeout(() => {
         splash.style.opacity = '0';
         setTimeout(() => {
           splash.style.display = 'none';
         }, 400);
-      }, 500);
+      }, 800);
     }
   });
 </script>
