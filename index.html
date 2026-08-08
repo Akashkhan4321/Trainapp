@@ -723,7 +723,25 @@
     100% { transform: scale(1.05); opacity: 1; }
     }
   </style>
+<script>
+  window.addEventListener('load', () => {
+    const splash = document.getElementById('appSplashScreen');
+    
+    // Check if app is running in Standalone (PWA) mode
+    const isPwaMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
+    if (isPwaMode && splash) {
+      splash.style.display = 'flex';
+      setTimeout(() => {
+        splash.style.opacity = '0';
+        setTimeout(() => {
+          splash.style.display = 'none';
+        }, 400);
+      }, 800);
+    }
+  });
+</script>
+  
   <!-- Firebase SDKs -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -2129,23 +2147,6 @@
   }
 </script>
 
-<script>
-  window.addEventListener('load', () => {
-    const splash = document.getElementById('appSplashScreen');
-    
-    // Check if app is running in Standalone (PWA) mode
-    const isPwaMode = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-    if (isPwaMode && splash) {
-      splash.style.display = 'flex';
-      setTimeout(() => {
-        splash.style.opacity = '0';
-        setTimeout(() => {
-          splash.style.display = 'none';
-        }, 400);
-      }, 800);
-    }
-  });
-</script>
 </body>
 </html>
